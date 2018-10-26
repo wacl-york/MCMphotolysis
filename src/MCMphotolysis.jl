@@ -55,17 +55,21 @@ function j_oldpars(scen)
   plot_jold(sza,χ,jvals,magnitude,fit,time,iofolder,scen)
   wrt_params(names(jvals),fit,magnitude,sigma,rmse,R2,iofolder,time)
 
-  # Return solar zenith angles, j values and fit data
-  return (sza, χ), jvals, fit
+  # Write data to output text file
+
   =#
-  return (sza, χ), jvals
+  return (sza, χ), jvals, fit, (sigma, rmse, R2)
 end #function j_parameters
 
 end # module MCMphotolysis
 
+#=
+systime = Dates.now()
 
-systime = now()
 println("load data...")
 scen = "testM4"
 ifile, iofolder = setup_files(scen)
 jvals, sza, χ = readTUV(ifile)
+
+scen = Juno.input("what? ")
+=#
