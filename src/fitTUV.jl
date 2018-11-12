@@ -22,10 +22,10 @@ function fit_jold(jvals,sza)
     # Derive fit
     push!(fit, curve_fit(jold, sza, jvals[i], p0))
     # Derive sigma with 95% confidence
-    push!(sigma, estimate_errors(fit[i],0.95))
+    push!(sigma, margin_error(fit[i],0.05))
     # Calculate statistical data for RMSE and R^2
     ss_err = sum(fit[i].resid.^2)
-    ss_tot = sum((jvals[i]-mean(jvals[i])).^2)
+    ss_tot = sum((jvals[i].-mean(jvals[i])).^2)
     # RMSE
     push!(rmse, √(ss_err/fit[i].dof))
     # R^2
@@ -33,7 +33,6 @@ function fit_jold(jvals,sza)
   end
 
   return fit, sigma, rmse, R2
-
 end #function fit_j
 
 
