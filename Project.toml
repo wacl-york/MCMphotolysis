@@ -2,6 +2,7 @@ name = "MCMphotolysis"
 uuid = "37f95c2c-7f9b-11e8-13ad-816be0d1e117"
 authors = ["Peter Bräuer <pb866@york.ac.uk>"]
 version = "0.1.0"
+julia = "0.7-"
 
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"

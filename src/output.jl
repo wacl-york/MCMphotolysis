@@ -1,8 +1,9 @@
 """
-    plot_j(jvals, iofolder, fit, systime)
+    plot_j(jvals::Dict{Symbol,Any},systime::DateTime,iofolder::String,ifile::String)
 
-Plot j values saved in dataframe jvals and parameterisations derived from parameters
-in fit to file parameters.dat in the iofolder together with the time of creation (time).
+Plot j values saved in `jvals[:jvals]` and parameterisations derived from parameters
+in `jvals[:fit]` to file `ifile.pdf` in the `iofolder` together with the
+`systime` of creation.
 """
 function plot_jold(jvals::Dict{Symbol,Any},systime::DateTime,iofolder::String,ifile::String)
 
@@ -49,13 +50,11 @@ end #function plot_j
 
 
 """
-    wrt_params(rxn, fit, sigma, rmse, R2, iofolder, time)
+    wrt_params(jvals, iofolder, systime)
 
-For each reaction (rxn), from param in fit and sigma, print parameters
-and 95% confidence together with RMSE and R^2 to file 'parameters.dat'
-in the designated output folder (iofolder).
-
-Print the time of creation (time) to the output file.
+Write the parameters, statistical data, and reaction labels stored in the
+dictionary `jvals` to the file `parameters.dat` in the `iofolder` and state
+the `systime` of creation.
 """
 function wrt_params(jvals, iofolder, systime)
 

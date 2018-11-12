@@ -3,10 +3,12 @@
 #########################################
 
 """
-    fit_j(jvals)
+    fit_j(jvals, sza)
 
-Derive MCM parameterisations for dataframe jvals with χ-dependent _j_ values.
-    j / s^-1 = l·cos^m(χ)·exp(-n·sec(χ))
+Derive MCM parameterisations for DataFrame `jvals` with `sza`-dependent _j_ values.
+    j / s^-1 = l·cos^m(sza)·exp(-n·sec(sza))]
+
+The Vector of solar zenith angles `sza` must be in rad.
 """
 function fit_jold(jvals,sza)
 

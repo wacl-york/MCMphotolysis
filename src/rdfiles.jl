@@ -1,8 +1,11 @@
 """
-    get_fnames(scen)
+    get_fnames(scen, output)
 
-From the scenario name (scen) used in TUV derive names for the TUV output file
+From the scenario name (scen) used in TUV, derive names for the TUV output file
 and the output folder.
+
+If `output` is `true`, create a output folder `./params_<scen>`. Ask to overwrite,
+if folder already exists.
 """
 function setup_files(scen, output)
   # Test script argument and ask for input file, if missing

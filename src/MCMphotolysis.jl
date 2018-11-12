@@ -34,14 +34,22 @@ function __init__()
 end
 
 """
-    j_oldpars(scen)
+    j_oldpars(scen::String; output::Bool=true)
 
 Read reactions from a TUV output file named `scen`.txt, derive MCM l,m,n-parameterisations
-for photolysis, plot the _j_ values from TUV and the parameterisation for all reactions
-to a pdf and print the j values and errors/statistical data to a text file in a folder
-`params_<scen>`.
-Return solar zenith angle as tuple of arrays with deg/rad, the TUV _j_ value data,
-and the fit data (as array with entries for each reaction).
+for photolysis and return a dictionary with the following entries:
+
+- `:jvals`: DataFrame with j values (devided by maximum order of magnitude, i.e. without the `e-...`)
+- `:order`: Vector with order of magnitudes
+- `:deg`/`:rad`: Vector with solar zenith angles in deg/rad
+- `:fit`: Vector with LsqFit data
+- `:σ`: Vector of Vectors with σ-values for the 95% confidence interval for the `l`, `m`, and `n` parameters
+- `:RMSE`: Vector of root mean square errors
+- `:R2`: Vector of correlation cofficients R²
+
+If output is set to `true` (_default_), _j_ values from TUV and the parameterisations
+for all reactions are plotted to a pdf and _j_ values and errors/statistical data
+are printed to a text file in a folder named `params_<scen>`.
 """
 function j_oldpars(scen::String; output::Bool=true)
   # Initialise system time and output path/file name
