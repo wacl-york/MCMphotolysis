@@ -12,6 +12,7 @@ using ProgressMeter
 using LsqFit
 using PyPlot, PyCall
 using DataFrames
+using Printf
 # PyCall python imports
 # @pyimport matplotlib.backends.backend_pdf as pdf
 const pdf = PyNULL()
@@ -57,13 +58,13 @@ function j_oldpars(scen::String; output::Bool=true)
 
   # Derive parameterisations for j values
   fit, sigma, rmse, R2 = fit_jold(jvals[:jvals],jvals[:rad])
-  jvals[:fit] = fit; jvals[:σ] = sigma, jvals[:RMSE] = rmse; jvals[:R2] = R2
+  jvals[:fit] = fit; jvals[:σ] = sigma; jvals[:RMSE] = rmse; jvals[:R2] = R2
 
   # # Generate output
   if output
     # println("ϑ")
     plot_jold(jvals,systime,iofolder,scen)
-    # wrt_params(names(jvals),fit,magnitude,sigma,rmse,R2,iofolder,time)
+    wrt_params(jvals,iofolder,systime)
   end
   return jvals
 end #function j_parameters

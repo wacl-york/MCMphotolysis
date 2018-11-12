@@ -11,7 +11,6 @@ function plot_jold(jvals::Dict{Symbol,Any},systime::DateTime,iofolder::String,if
 
   # Initialise array of plots and define x data
   nj = length(jvals[:fit])
-  # jplot = Array{PyCall.PyObject}(nj)
   ofile = "$iofolder/$ifile.pdf"
   opfile = pdf[:PdfPages](ofile)
 
@@ -47,6 +46,44 @@ function plot_jold(jvals::Dict{Symbol,Any},systime::DateTime,iofolder::String,if
   # compile pngs in single pdf and delete pngs
   opfile[:close]()
 end #function plot_j
+
+
+"""
+    wrt_params(rxn, fit, sigma, rmse, R2, iofolder, time)
+
+For each reaction (rxn), from param in fit and sigma, print parameters
+and 95% confidence together with RMSE and R^2 to file 'parameters.dat'
+in the designated output folder (iofolder).
+
+Print the time of creation (time) to the output file.
+"""
+function wrt_params(jvals, iofolder, systime)
+
+  #transform dataframe column symbols to strings
+  rxn = string.(names(jvals[:jvals]))
+
+  # Open output file
+  open("$iofolder/parameters.dat","w") do f
+    # Print header
+    println(f,
+    "Parameters and statistical data for parameterisation of photolysis processes")
+    println(f,
+    "in the Master Chemical Mechanism (MCM; http://mcm.york.ac.uk/) using:")
+    println(f, "\nj / s-1 = l·(cos(x))^m·exp(-n·sec(x))")
+    println(f, "\n\ncreated $(Dates.format(systime,"dd.mm.yyyy, HH:MM:SS"))")
+    println(f,"\n                 P a r a m e t e r s               S t a t i s t i c s")
+    println(f,"     l / s-1              m              n         RMSE / s-1    R^2      Reaction")
+
+    # Loop over reactions
+    for i = 1:length(jvals[:fit])
+      # Print parameters, statistical data, and reaction label to output file
+      @printf(f,"(%6.3f±%.3f)e%d    %.3f±%.3f    %.3f±%.3f    %.3e    %.4f    %s\n",
+      jvals[:fit][i].param[1], jvals[:σ][i][1], Int(jvals[:order][i]),
+      jvals[:fit][i].param[2], jvals[:σ][i][2], jvals[:fit][i].param[3], jvals[:σ][i][3],
+      jvals[:RMSE][i]⋅10^jvals[:order][i], jvals[:R2][i], rxn[i])
+    end
+  end
+end # function wrt_params
 
 
 """
