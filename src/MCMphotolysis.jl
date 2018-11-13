@@ -65,8 +65,8 @@ function j_oldpars(scen::String; output::Bool=true)
   jvals[:order] = magnitude
 
   # Derive parameterisations for j values
-  fit, sigma, rmse, R2 = fit_jold(jvals[:jvals],jvals[:rad])
-  jvals[:fit] = fit; jvals[:σ] = sigma; jvals[:RMSE] = rmse; jvals[:R2] = R2
+  fitstats = fit_jold(jvals[:jvals],jvals[:rad])
+  jvals = merge(jvals, fitstats)
 
   # # Generate output
   if output

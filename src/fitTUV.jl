@@ -34,7 +34,7 @@ function fit_jold(jvals,sza)
     push!(R2, 1. - (ss_err/ss_tot))
   end
 
-  return fit, sigma, rmse, R2
+  return Dict(:fit => fit, :σ => sigma, :RMSE => rmse, :R2 => R2)
 end #function fit_j
 
 
