@@ -22,11 +22,12 @@ function plot_jold(jvals::Dict{Symbol,Any},systime::DateTime,iofolder::String,if
     m = jvals[:fit][i].param[2]
     n = jvals[:fit][i].param[3]
     # Calculate parameterised values
-    jpar = l.⋅cos.(jvals[:rad]).^m.⋅exp.(-n.⋅sec.(jvals[:rad]))
+    χ = collect(0:π/360:π/2)
+    jpar = l.⋅cos.(χ).^m.⋅exp.(-n.⋅sec.(χ))
     # Load TUV data and parameterisation for plotting
     jplt = pyp.load_PlotData(DataFrame(χ=jvals[:deg], j=jvals[:jvals][i]),
                             label = "TUV data", pt = "s", lc = "black", lt = "None")
-    pplt = pyp.load_PlotData(DataFrame(x=jvals[:deg], y=jpar), lc ="red", lw=2,
+    pplt = pyp.load_PlotData(DataFrame(χ=collect(0:0.5:90), j=jpar), lc ="red", lw=2,
                             label="MCM Parameterisaton")
     # Plot TUV data
     fig, ax = pyp.plot_data(jplt, pplt, ti = ptitle[i],
