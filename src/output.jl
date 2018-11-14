@@ -11,12 +11,10 @@ function plot_jold(jvals::Dict{Symbol,Any},systime::DateTime,iofolder::String,if
   ptitle = beautify_chem(names(jvals[:jvals]))
 
   # Initialise array of plots and define x data
-  nj = length(jvals[:fit])
-  ofile = "$iofolder/$ifile.pdf"
-  opfile = pdf[:PdfPages](ofile)
+  opfile = pdf[:PdfPages]("$iofolder/$ifile.pdf")
 
   # Loop over all reactions
-  @showprogress 1 "plot data..." for i=1:nj
+  @showprogress 1 "plot data..." for i=1:length(jvals[:fit])
     # define parameters
     l = jvals[:fit][i].param[1]
     m = jvals[:fit][i].param[2]

@@ -70,41 +70,30 @@ function get_O3dep_files(scen, output)
   o3col=filelist[idx]
   o3col=[replace(o, "$scen." => "") for o in o3col]
   o3col=[replace(o, ".txt" => "") for o in o3col]
-  o3col = sort!(parse.(Float64, o3col))
-  ifile = ["$scen.$i.txt" for i in convert.(Int64, o3col)]
+  o3col = sort!(parse.(Int64, o3col))
+  ifile = ["$scen.$i.txt" for i in o3col]
 
   # return file and folder names
   return ifile, iofolder, o3col
 end #function get_fnames
 
 
-function collect_TUVdata(inpfile)
+"""
+    getTUVdata(inpfile)
+
+From vector `inpfile` with file names of all ozone scenarios get a dictionary
+wit j value related data.
+"""
+function getTUVdata(inpfile)
   # Read j values
-  jvals = []; magnitude = []; sza = Float64[]; χ = Float64[]
-  params = []
-  # for f in inpfile
-  #   j, sza, χ = read_j(f)
-  #   push!(TUVdata, j)
-  # end
-  for (n,f) in enumerate(inpfile)
+  jvals = []
+  for f in inpfile
     j = readTUV(f)
     magnitude = [floor(log10(j[:jvals][i][1])) for i = 1:length(j[:jvals])]
-    for i = 1:length(magnitude)  j[:jvals][i] ./= 10^magnitude[i]  end
+    [j[:jvals][i] ./= 10^magnitude[i]  for i = 1:length(magnitude)]
     j[:order] = magnitude
-    push!(jvals,j)
+    push!(jvals, j)
   end
-  # TUVdata = zeros(Array{Float64,3}(length(jvals[1][1]),length(jvals[1]),length(jvals)))
-  # magnitude = [floor(log10(jvals[1][1,d])) for d in 1:length(jvals[1][1,:])]
-  # rxns = names(jvals[1])
-  # for DU = 1:length(jvals), rxn = 1:length(jvals[1])
-  #   TUVdata[:,rxn,DU] = jvals[DU][rxn]/10^magnitude[rxn]
-  # end
-  # params350 = Matrix{Float64}(0,4)
-  # j350 = DataFrame()
-  # [j350[rxns[i]] = TUVdata[:,i,iDU[3]] for i = 1:length(rxns)]
-  # fit, sigma, stats = fit_jold(j350,χ)
-  # [params350 = vcat(params350, [fit[i].param[2] fit[i].param[3] sigma[i][2] sigma[i][3]])
-  #   for i = 1:length(rxns)]
 
   return jvals #sza, χ, TUVdata, params350, magnitude, rxns
 end

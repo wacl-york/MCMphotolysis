@@ -88,7 +88,7 @@ file `parameters.dat` listing the fitting parameters for the MCM photolysis para
 `<scen>.pdf` with a graphical display of the TUV calculated data and the MCM parameterisation.
 """
 function j_parameters(scen::String;
-         output::Union{Bool,Int64,Float64,Vector{Int64},Vector{Float64}}=350)
+         output::Union{Bool,Int64,Vector{Int64}}=350)
   # Initialise system time and output path/file name
   systime = now()
 
@@ -99,13 +99,15 @@ function j_parameters(scen::String;
   # Read TUV data and get original l parameters and m, n parameters for 350DU
   # Data is rescaled to exclude the order of magnitude
   # sza, χ, TUVdata, params350, magnitude, rxns =
-  jvals = collect_TUVdata(inpfile)
+  jvals = getTUVdata(inpfile)
 
+  l, m, n = getMCMparams(jvals, o3col)
+  lpar = fitl(l, o3col)
   # parMCM, sigMCM, jMCM, fit = fit_j(TUVdata, params350, o3col, χ, iDU, rxns)
   #
   # plot_j(sza,χ,o3col,TUVdata,jMCM,magnitude,rxns,iDU,time,iofolder,scen)
 
-  return jvals #sza, TUVdata, fit
+  return jvals, lpar #sza, TUVdata, fit
 end #function j_parameters
 
 end # module MCMphotolysis
