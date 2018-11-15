@@ -94,7 +94,7 @@ function j_parameters(scen::String;
 
   # Read dataframe with j values from TUV output file
   println("load data...")
-  inpfile, iofolder, o3col = get_O3dep_files(scen, output)
+  inpfile, iofolder, o3col = getO3files(scen, output)
 
   # Read TUV data and get original l parameters and m, n parameters for 350DU
   # Data is rescaled to exclude the order of magnitude
@@ -102,7 +102,7 @@ function j_parameters(scen::String;
   jvals = getTUVdata(inpfile)
 
   l, m, n = getMCMparams(jvals, o3col)
-  lpar = fitl(l, o3col)
+  lpar = fitl(l, o3col, names(jvals[1][:jvals]))
   # parMCM, sigMCM, jMCM, fit = fit_j(TUVdata, params350, o3col, χ, iDU, rxns)
   #
   # plot_j(sza,χ,o3col,TUVdata,jMCM,magnitude,rxns,iDU,time,iofolder,scen)

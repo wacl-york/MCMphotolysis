@@ -12,7 +12,7 @@ function fit_jold(jvals,sza)
   fit = []; sigma = []; rmse = []; R2 = []
 
   # Loop over all j data
-  @showprogress 1 "fit data ..." for i = 1:length(jvals) #1:length(jvals)
+  for i = 1:length(jvals) #1:length(jvals)
 
     # Define fit function with initial guesses
     p0 = [jvals[i][1],0.8,0.3]
@@ -66,7 +66,7 @@ From vector `l` with vectors of l parameters for every ozone column and every
 photolysis reaction  and vector `o3col` with the ozone column values, return
 a Matrix with the revised parameters for the ozone column dependent new l parameter.
 """
-function fitl(l, o3col)
+function fitl(l, o3col, rxn)
   # Initialise
   lpar = []; p0 = [0.,1.,100.,1.,100.]
   o3 = convert.(Float64, o3col)
@@ -76,15 +76,15 @@ function fitl(l, o3col)
     fit = curve_fit(lnew, o3, l[i,:], p0)
     # Adjust initial guesses for non-convergence
     fit, fail = convergel(o3, l[i,:], fit, "p0", 5,
-      ["\033[36mINFO:\033[0m Reaction $i (**label**) converged after ",
+      ["\033[36mINFO:\033[0m Reaction $i ($(rxn[i])) converged after ",
       " interations."])
     # Drop lowest ozone column values for non-convergence
     fit, fail = convergel(o3, l[i,:], fit, "low", 3,
-      ["\033[36mINFO:\033[0m Reaction $i (**label**) converged after dropping lowest ",
+      ["\033[36mINFO:\033[0m Reaction $i ($(rxn[i])) converged after dropping lowest ",
       " O3 column values."])
     # Drop highest ozone column values for non-convergence
     fit, fail = convergel(o3, l[i,:], fit, "high", 3,
-      ["\033[36mINFO:\033[0m Reaction $i (**label**) converged after dropping highest ",
+      ["\033[36mINFO:\033[0m Reaction $i ($(rxn[i])) converged after dropping highest ",
         " O3 column values."])
     # Warn, if convergence couldn't be reached
     if fail
@@ -151,4 +151,4 @@ jMCM(χ,O3col,lpar,m,n) = lnew(O3col,lpar).⋅
 """
     lnew(O3,p) / s^-1 = p[1] + p[2]·exp(-O3/p[3]) + p[4]·exp(-O3/p[5])
 """
-lnew(O3,p) = p[1].+p[2].⋅exp.(-O3./p[3]).+p[4].⋅exp.(-O3ß./p[5])
+lnew(O3,p) = p[1].+p[2].⋅exp.(-O3./p[3]).+p[4].⋅exp.(-O3./p[5])

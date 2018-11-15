@@ -36,7 +36,7 @@ end #function setup_files
 
 
 """
-    get_O3dep_files(scen, output)
+    getO3files(scen, output)
 
 From the scenario name (`scen`) used in TUV, derive names for the TUV output file
 and the output folder and return them.
@@ -44,7 +44,7 @@ and the output folder and return them.
 If output is set, create a folder `params_<scen>` and ask to overwrite, if already
 existant.
 """
-function get_O3dep_files(scen, output)
+function getO3files(scen, output)
 
   # Test script argument and ask for input file, if missing
   while !any(occursin.(scen,readdir()))

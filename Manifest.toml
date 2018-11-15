@@ -274,9 +274,9 @@ uuid = "9abbd945-dff8-562f-b5e8-e1ebf5ef1b79"
 
 [[ProgressMeter]]
 deps = ["Distributed", "Printf", "Random", "Test"]
-git-tree-sha1 = "5b55c2c974084eab2689ec0d1d5245561b22aeb0"
+git-tree-sha1 = "37e7d3982c8d4610196829c01387dd561756aedc"
 uuid = "92933f4c-e287-5a05-a399-4b506db050ca"
-version = "0.6.1"
+version = "0.8.0"
 
 [[PyCall]]
 deps = ["Compat", "Conda", "MacroTools", "Statistics", "VersionParsing"]
@@ -438,11 +438,11 @@ version = "0.5.3"
 
 [[filehandling]]
 deps = ["DataFrames", "Juno", "Revise"]
-git-tree-sha1 = "1b9ed9e6a80d07ebdd8b903c85f264f6a374b8e5"
+git-tree-sha1 = "64c5ff090ebcd490f846af6195afec49bf30424f"
 repo-rev = "master"
 repo-url = "https://github.com/pb866/filehandling.git"
 uuid = "4b8ed5e0-8069-11e8-094b-3f5425e6acdd"
-version = "0.1.2"
+version = "0.1.3"
 
 [[pyp]]
 deps = ["DataFrames", "Dates", "LaTeXStrings", "LinearAlgebra", "OhMyREPL", "Parameters", "PyPlot", "filehandling"]
