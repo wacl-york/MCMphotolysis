@@ -5,32 +5,29 @@ Plot j values saved in `jvals[:jvals]` and parameterisations derived from parame
 in `jvals[:fit]` to file `ifile.pdf` in the `iofolder` together with the
 `systime` of creation.
 """
-function plot_jold(jvals::Dict{Symbol,Any},systime::DateTime,iofolder::String,ifile::String)
+function plot_jold(jvals::MCMphotolysis.PhotData,systime::DateTime,iofolder::String,ifile::String)
 
   # Format titles with Latex using header of jvals
-  ptitle = beautify_chem(names(jvals[:jvals]))
+  ptitle = beautify_chem(names(jvals.jval))
 
   # Initialise array of plots and define x data
   opfile = pdf[:PdfPages]("$iofolder/$ifile.pdf")
 
   # Loop over all reactions
-  @showprogress 1 "plot data..." for i=1:length(jvals[:fit])
+  @showprogress 1 "plot data..." for i=1:length(jvals.l)
     # define parameters
-    l = jvals[:fit][i].param[1]
-    m = jvals[:fit][i].param[2]
-    n = jvals[:fit][i].param[3]
     # Calculate parameterised values
     χ = collect(0:π/360:π/2)
-    jpar = l.⋅cos.(χ).^m.⋅exp.(-n.⋅sec.(χ))
+    jpar = jvals.l[i]./10^jvals.order[i].⋅cos.(χ).^jvals.m[i].⋅exp.(-jvals.n[i].⋅sec.(χ))
     # Load TUV data and parameterisation for plotting
-    jplt = pyp.load_PlotData(DataFrame(χ=jvals[:deg], j=jvals[:jvals][i]),
+    jplt = pyp.load_PlotData(DataFrame(χ=jvals.deg, j=jvals.jval[i]./10^jvals.order[i]),
                             label = "TUV data", pt = "s", lc = "black", lt = "None")
-    pplt = pyp.load_PlotData(DataFrame(χ=collect(0:0.5:90), j=jpar), lc ="red", lw=2,
+    pplt = pyp.load_PlotData(DataFrame(χ=collect(0:0.5:90), j=jpar), lc = "red", lw = 2,
                             label="MCM Parameterisaton")
     # Plot TUV data
     fig, ax = pyp.plot_data(jplt, pplt, ti = ptitle[i],
               xlabel = "solar zenith angle χ",
-              ylabel = "j / 10\$^{$(Int(jvals[:order][i]))}\$ s\$^{-1}\$",
+              ylabel = "j / 10\$^{$(Int(jvals.order[i]))}\$ s\$^{-1}\$",
               xlims=(0,90), ylims=(0,nothing), maj_xticks=15, min_xticks=5, ti_offset=-2,
               legpos="lower left")
 
@@ -49,6 +46,15 @@ end #function plot_j
 
 
 """
+
+
+"""
+function plotl(jvals, l, m, n)
+  body
+end
+
+
+"""
     wrt_params(jvals, iofolder, systime)
 
 Write the parameters, statistical data, and reaction labels stored in the
@@ -56,9 +62,6 @@ dictionary `jvals` to the file `parameters.dat` in the `iofolder` and state
 the `systime` of creation.
 """
 function wrt_params(jvals, iofolder, systime)
-
-  #transform dataframe column symbols to strings
-  rxn = string.(names(jvals[:jvals]))
 
   # Open output file
   open("$iofolder/parameters.dat","w") do f
@@ -73,12 +76,12 @@ function wrt_params(jvals, iofolder, systime)
     println(f,"     l / s-1              m              n         RMSE / s-1    R^2      Reaction")
 
     # Loop over reactions
-    for i = 1:length(jvals[:fit])
+    for i = 1:length(jvals.rxn)
       # Print parameters, statistical data, and reaction label to output file
       @printf(f,"(%6.3f±%.3f)e%d    %.3f±%.3f    %.3f±%.3f    %.3e    %.4f    %s\n",
-      jvals[:fit][i].param[1], jvals[:σ][i][1], Int(jvals[:order][i]),
-      jvals[:fit][i].param[2], jvals[:σ][i][2], jvals[:fit][i].param[3], jvals[:σ][i][3],
-      jvals[:RMSE][i]⋅10^jvals[:order][i], jvals[:R2][i], rxn[i])
+      jvals.l[i]/10^jvals.order[i], jvals.sigma[i][1]/10^jvals.order[i], Int(jvals.order[i]),
+      jvals.m[i], jvals.sigma[i][2], jvals.n[i], jvals.sigma[i][3],
+      jvals.RMSE[i], jvals.R2[i], jvals.rxn[i])
     end
   end
 end # function wrt_params

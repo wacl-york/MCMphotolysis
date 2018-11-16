@@ -6,7 +6,7 @@ Derive MCM parameterisations for DataFrame `jvals` with `sza`-dependent _j_ valu
 
 The Vector of solar zenith angles `sza` must be in rad.
 """
-function fit_jold(jvals)
+function fit_jold(jvals, o3col)
 
   # Initialise arrays for fitting data
   fit = []; sigma = []; rmse = []; R2 = []
@@ -31,17 +31,18 @@ function fit_jold(jvals)
     # R^2
     push!(R2, 1. - (ss_err/ss_tot))
   end
-  jvals.fit = fit;
-  jvals.sigma = sigma;
-  jvals.RMSE = rmse;
-  jvals.R2 = R2
-  jvals.l = Float64[fit[i].param[1] for i = 1:length(fit)]
-  jvals.m = Float64[fit[i].param[2] for i = 1:length(fit)]
-  jvals.n = Float64[fit[i].param[3] for i = 1:length(fit)]
-
+  conv = [f.converged for f in fit]
+  l = [fit[i].param[1].*10^jvals.order[i] for i = 1:length(fit)]
+  m = [fit[i].param[2] for i = 1:length(fit)]
+  n = [fit[i].param[3] for i = 1:length(fit)]
+  sigma = [10^jvals.order[i].*sigma[i] for i = 1:length(sigma)]
+  rmse  = [10^jvals.order[i].*rmse[i] for i = 1:length(rmse)]
   ydata = [jvals.jval[i] .*= 10^jvals.order[i]  for i = 1:length(jvals.jval)]
 
-  return jvals
+  jdata = PhotData(jvals.jval, jvals.order, jvals.rxn, jvals.deg, jvals.rad,
+    o3col, l, m, n, sigma, rmse, R2, conv)
+
+  return jdata
 end #function fit_j
 
 

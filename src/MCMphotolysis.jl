@@ -10,15 +10,34 @@ using Juno: input #get terminal input inside or outside Atom
 using Dates
 using ProgressMeter
 using LsqFit
-using PyPlot, PyCall
+using PyCall
 using DataFrames
 using Printf
+using LaTeXStrings
 # PyCall python imports
 const pdf = PyNULL()
 
 # Load self-made packages
 using filehandling
 import pyp
+
+### NEW TYPES
+struct PhotData
+  jval::DataFrame
+  order::Vector{Float64}
+  rxn::Vector{String}
+  deg::Vector{Float64}
+  rad::Vector{Float64}
+  O3col::Number
+  l::Union{Vector{Float64},Vector{Vector{Float64}}}
+  m::Vector{Float64}
+  n::Vector{Float64}
+  sigma::Vector{Vector{Float64}}
+  RMSE::Vector{Float64}
+  R2::Vector{Float64}
+  converged::Vector{Bool}
+end
+
 
 # export public functions
 export j_oldpars,
@@ -52,7 +71,7 @@ If output is set to `true` (_default_), _j_ values from TUV and the parameterisa
 for all reactions are plotted to a pdf and _j_ values and errors/statistical data
 are printed to a text file in a folder named `params_<scen>`.
 """
-function j_oldpars(scen::String; output::Bool=true)
+function j_oldpars(scen::String; output::Bool=true, O3col::Number=350)
   # Initialise system time and output path/file name
   systime = now()
 
@@ -62,16 +81,14 @@ function j_oldpars(scen::String; output::Bool=true)
   jvals = readTUV(ifile)
 
   # Derive parameterisations for j values
-  jvals = fit_jold(jvals)
+  jvals = fit_jold(jvals, O3col)
 
-  #= # Generate output
   if output
     plot_jold(jvals,systime,iofolder,scen)
     wrt_params(jvals,iofolder,systime)
   end
-  =#
   return jvals
-end #function j_parameters
+end #function j_oldpars
 
 #=
 """
