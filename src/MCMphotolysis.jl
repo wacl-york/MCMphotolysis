@@ -14,7 +14,6 @@ using PyPlot, PyCall
 using DataFrames
 using Printf
 # PyCall python imports
-# @pyimport matplotlib.backends.backend_pdf as pdf
 const pdf = PyNULL()
 
 # Load self-made packages
@@ -33,6 +32,7 @@ include(joinpath(dir,"output.jl"))
 function __init__()
   copy!(pdf, pyimport("matplotlib.backends.backend_pdf"))
 end
+
 
 """
     j_oldpars(scen::String; output::Bool=true)
@@ -61,24 +61,19 @@ function j_oldpars(scen::String; output::Bool=true)
   ifile, iofolder = setup_files(scen, output)
   jvals = readTUV(ifile)
 
-  magnitude = [floor(log10(jvals[:jvals][i][1])) for i = 1:length(jvals[:jvals])]
-  for i = 1:length(magnitude)  jvals[:jvals][i] ./= 10^magnitude[i]  end
-  jvals[:order] = magnitude
-
   # Derive parameterisations for j values
-  fitstats = fit_jold(jvals[:jvals],jvals[:rad])
-  jvals = merge(jvals, fitstats)
+  jvals = fit_jold(jvals)
 
-  # # Generate output
+  #= # Generate output
   if output
-    # println("ϑ")
     plot_jold(jvals,systime,iofolder,scen)
     wrt_params(jvals,iofolder,systime)
   end
+  =#
   return jvals
 end #function j_parameters
 
-
+#=
 """
     j_parameters(scen::String; output::Union{Bool,Int64,Float64,Vector{Int64},Vector{Float64}}=350)
 
@@ -109,5 +104,6 @@ function j_parameters(scen::String;
 
   return jvals, lpar #sza, TUVdata, fit
 end #function j_parameters
+=#
 
 end # module MCMphotolysis

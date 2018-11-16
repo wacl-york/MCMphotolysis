@@ -127,9 +127,6 @@ git-tree-sha1 = "c24e9b6500c037673f0241a2783472b8c3d080c7"
 uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
 version = "0.16.4"
 
-[[FileWatching]]
-uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
-
 [[FixedPointNumbers]]
 deps = ["Test"]
 git-tree-sha1 = "b8045033701c3b10bf2324d7203404be7aef88ba"
@@ -316,12 +313,6 @@ git-tree-sha1 = "f6fbf4ba64d295e146e49e021207993b6b48c7d1"
 uuid = "ae029012-a4dd-5104-9daa-d747884805df"
 version = "0.5.2"
 
-[[Revise]]
-deps = ["Distributed", "FileWatching", "InteractiveUtils", "LibGit2", "OrderedCollections", "Pkg", "REPL", "Random", "Test", "UUIDs", "Unicode"]
-git-tree-sha1 = "e7dc601551df647113d65a50f940ab19b2015f0b"
-uuid = "295af30f-e4ad-537b-8983-00126c2a3abe"
-version = "0.7.12"
-
 [[Rmath]]
 deps = ["BinaryProvider", "Libdl", "Random", "Statistics", "Test"]
 git-tree-sha1 = "9a6c758cdf73036c3239b0afbea790def1dabff9"
@@ -437,17 +428,17 @@ uuid = "ea10d353-3f73-51f8-a26c-33c1cb351aa5"
 version = "0.5.3"
 
 [[filehandling]]
-deps = ["DataFrames", "Juno", "Revise"]
-git-tree-sha1 = "64c5ff090ebcd490f846af6195afec49bf30424f"
+deps = ["DataFrames", "Juno", "Parameters"]
+git-tree-sha1 = "17405ad7e3eaeb7f3341696bf6406cfdbbd28474"
 repo-rev = "master"
 repo-url = "https://github.com/pb866/filehandling.git"
 uuid = "4b8ed5e0-8069-11e8-094b-3f5425e6acdd"
-version = "0.1.3"
+version = "0.2.0"
 
 [[pyp]]
 deps = ["DataFrames", "Dates", "LaTeXStrings", "LinearAlgebra", "OhMyREPL", "Parameters", "PyPlot", "filehandling"]
-git-tree-sha1 = "85d1e7c993f1b3e452f2fde19780f78ea1f07310"
+git-tree-sha1 = "9f20cb48da31edc145e2b3413b541295039a98a8"
 repo-rev = "master"
 repo-url = "https://github.com/pb866/pyp.git"
 uuid = "1f59166c-d923-11e8-01b9-e713fdda0351"
-version = "0.1.0"
+version = "0.1.1"

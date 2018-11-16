@@ -6,31 +6,42 @@ Derive MCM parameterisations for DataFrame `jvals` with `sza`-dependent _j_ valu
 
 The Vector of solar zenith angles `sza` must be in rad.
 """
-function fit_jold(jvals,sza)
+function fit_jold(jvals)
 
   # Initialise arrays for fitting data
   fit = []; sigma = []; rmse = []; R2 = []
+  ydata = [jvals.jval[i] ./= 10^jvals.order[i]  for i = 1:length(jvals.jval)]
 
   # Loop over all j data
-  for i = 1:length(jvals) #1:length(jvals)
+  for i = 1:length(jvals.jval) #1:length(jvals)
 
     # Define fit function with initial guesses
-    p0 = [jvals[i][1],0.8,0.3]
+    p0 = [1.35jvals.jval[i][1],0.8,0.3]
+    # Fit at order 0 to increase accuracy
 
     # Derive fit
-    push!(fit, curve_fit(jold, sza, jvals[i], p0))
+    push!(fit, curve_fit(jold, jvals.rad, ydata[i], p0))
     # Derive sigma with 95% confidence
     push!(sigma, margin_error(fit[i],0.05))
     # Calculate statistical data for RMSE and R^2
     ss_err = sum(fit[i].resid.^2)
-    ss_tot = sum((jvals[i].-mean(jvals[i])).^2)
+    ss_tot = sum((jvals.jval[i].-mean(jvals.jval[i])).^2)
     # RMSE
     push!(rmse, √(ss_err/fit[i].dof))
     # R^2
     push!(R2, 1. - (ss_err/ss_tot))
   end
+  jvals.fit = fit;
+  jvals.sigma = sigma;
+  jvals.RMSE = rmse;
+  jvals.R2 = R2
+  jvals.l = Float64[fit[i].param[1] for i = 1:length(fit)]
+  jvals.m = Float64[fit[i].param[2] for i = 1:length(fit)]
+  jvals.n = Float64[fit[i].param[3] for i = 1:length(fit)]
 
-  return Dict(:fit => fit, :σ => sigma, :RMSE => rmse, :R2 => R2)
+  ydata = [jvals.jval[i] .*= 10^jvals.order[i]  for i = 1:length(jvals.jval)]
+
+  return jvals
 end #function fit_j
 
 
