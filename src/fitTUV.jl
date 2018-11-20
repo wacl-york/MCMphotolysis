@@ -10,17 +10,16 @@ function fit_jold(jvals, o3col)
 
   # Initialise arrays for fitting data
   fit = []; sigma = []; rmse = []; R2 = []
-  ydata = [jvals.jval[i] ./= 10^jvals.order[i]  for i = 1:length(jvals.jval)]
 
   # Loop over all j data
   for i = 1:length(jvals.jval) #1:length(jvals)
 
     # Define fit function with initial guesses
-    p0 = [1.35jvals.jval[i][1],0.8,0.3]
+    p0 = [1.35/10^jvals.order[i].*jvals.jval[i][1],0.8,0.3]
     # Fit at order 0 to increase accuracy
 
     # Derive fit
-    push!(fit, curve_fit(jold, jvals.rad, ydata[i], p0))
+    push!(fit, curve_fit(jold, jvals.rad, jvals.jval[i] ./ 10^jvals.order[i], p0))
     # Derive sigma with 95% confidence
     push!(sigma, margin_error(fit[i],0.05))
     # Calculate statistical data for RMSE and R^2
@@ -37,7 +36,6 @@ function fit_jold(jvals, o3col)
   n = [fit[i].param[3] for i = 1:length(fit)]
   sigma = [10^jvals.order[i].*sigma[i] for i = 1:length(sigma)]
   rmse  = [10^jvals.order[i].*rmse[i] for i = 1:length(rmse)]
-  ydata = [jvals.jval[i] .*= 10^jvals.order[i]  for i = 1:length(jvals.jval)]
 
   jdata = PhotData(jvals.jval, jvals.order, jvals.rxn, jvals.deg, jvals.rad,
     o3col, l, m, n, sigma, rmse, R2, conv)
@@ -54,19 +52,16 @@ with ozone column values, return a Matrix with the old l parameters for every
 ozone column, and vectors of the m and n parameters for the original MCM photolysis
 parameterisations of every photolysis reaction in `jvals`.
 """
-function getMCMparams(jvals, o3col)
+function getMCMparams(jvals, O3col)
   fit = []
-  iO3 = findlast(o3col .≤ 350)
-  j350 = fit_jold(jvals[iO3][:jvals], jvals[iO3][:rad])
-  m = [f.param[2] for f in j350[:fit]]
-  n = [f.param[3] for f in j350[:fit]]
-  l = zeros(Float64, length(m), length(jvals))
-  for o3 = 1:length(jvals), jmax = 1:length(m)
-    l[jmax, o3] = jvals[o3][:jvals][jmax][1]⋅
-                  10^jvals[o3][:order][jmax]/10^jvals[iO3][:order][jmax]
+  iO3 = findlast(O3col .≤ 350)
+  j350 = fit_jold(jvals[iO3], O3col[iO3])
+  l = zeros(Float64, length(jvals[iO3].rxn), length(O3col))
+  for o3 = 1:length(O3col), jmax = 1:length(jvals[iO3].rxn)
+    l[jmax, o3] = jvals[o3].jval[jmax][1]/exp(-j350.n[jmax])
   end
 
-  return l, m, n
+  return l, j350
   # Loop over initial guesses, otherwise drop low o3col value
 end
 

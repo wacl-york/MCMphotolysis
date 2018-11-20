@@ -5,7 +5,7 @@ Plot j values saved in `jvals[:jvals]` and parameterisations derived from parame
 in `jvals[:fit]` to file `ifile.pdf` in the `iofolder` together with the
 `systime` of creation.
 """
-function plot_jold(jvals::MCMphotolysis.PhotData,systime::DateTime,iofolder::String,ifile::String)
+function plot_jold(jvals::PhotData,systime::DateTime,iofolder::String,ifile::String)
 
   # Format titles with Latex using header of jvals
   ptitle = beautify_chem(names(jvals.jval))
@@ -25,12 +25,12 @@ function plot_jold(jvals::MCMphotolysis.PhotData,systime::DateTime,iofolder::Str
     pplt = pyp.load_PlotData(DataFrame(χ=collect(0:0.5:90), j=jpar), lc = "red", lw = 2,
                             label="MCM Parameterisaton")
     # Plot TUV data
-    fig, ax = pyp.plot_data(jplt, pplt, ti = ptitle[i],
-              xlabel = "solar zenith angle χ",
-              ylabel = "j / 10\$^{$(Int(jvals.order[i]))}\$ s\$^{-1}\$",
-              xlims=(0,90), ylims=(0,nothing), maj_xticks=15, min_xticks=5, ti_offset=-2,
-              legpos="lower left")
 
+    fig, ax = pyp.plot_data(jplt, pplt, ti = ptitle[i],
+    xlabel = "solar zenith angle χ",
+    ylabel = "j / 10\$^{$(Int(jvals.order[i]))}\$ s\$^{-1}\$",
+    xlims=(0,90), ylims=(0,nothing), maj_xticks=15, min_xticks=5, ti_offset=-2,
+    legpos="lower left")
     # Plot time stamp
     ax[:annotate]("created $(Dates.format(systime,"dd.mm.yyyy, HH:MM:SS"))",
           xy=[0.02;0.22], xycoords="axes fraction", ha="left", va="bottom")

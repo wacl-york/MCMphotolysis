@@ -89,9 +89,6 @@ function getTUVdata(inpfile)
   jvals = []
   for f in inpfile
     j = readTUV(f)
-    magnitude = [floor(log10(j[:jvals][i][1])) for i = 1:length(j[:jvals])]
-    [j[:jvals][i] ./= 10^magnitude[i]  for i = 1:length(magnitude)]
-    j[:order] = magnitude
     push!(jvals, j)
   end
 
