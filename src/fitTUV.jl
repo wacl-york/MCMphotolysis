@@ -73,12 +73,14 @@ From vector `l` with vectors of l parameters for every ozone column and every
 photolysis reaction  and vector `o3col` with the ozone column values, return
 a Matrix with the revised parameters for the ozone column dependent new l parameter.
 """
-function fitl(l, o3col, rxn)
+function fitl(l, order, o3col, rxn)
   # Initialise
-  lpar = []; p0 = [0.,1.,100.,1.,100.]
+  lpar = []
   o3 = convert.(Float64, o3col)
+  l ./= [10^o for o in order]
   # Loop over reactions
   for i = 1:length(l[:,1])
+    p0 = [0.,l[i,1],100.,l[i,1],100.]
     # Fit l parameter to ozone column dependence
     fit = curve_fit(lnew, o3, l[i,:], p0)
     # Adjust initial guesses for non-convergence
@@ -99,8 +101,10 @@ function fitl(l, o3col, rxn)
       println("$i:\033[0m $(string(rxn[i])).")
     end
     # Save improved l parameters
+    fit.param[[1,2,4]] = fit.param[[1,2,4]]*10^order[i]
     push!(lpar, fit.param)
   end
+  l .*= [10^o for o in order]
 
   return lpar
 end

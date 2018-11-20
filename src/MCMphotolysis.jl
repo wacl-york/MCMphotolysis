@@ -118,7 +118,10 @@ function j_parameters(scen::String;
   jvals = getTUVdata(inpfile)
 
   l, j350 = getMCMparams(jvals, O3col)
-  lpar = fitl(l, O3col, names(jvals[1].jval))
+  lpar = fitl(l, j350.order, O3col, names(jvals[1].jval))
+
+  ptitle = beautify_chem(names(j350.jval))
+  plotl(l, lpar, j350.m, j350.n, j350.order, O3col, ptitle, iofolder, systime, output)
   # parMCM, sigMCM, jMCM, fit = fit_j(TUVdata, params350, o3col, χ, iDU, rxns)
   #
   # plot_j(sza,χ,O3col,TUVdata,jMCM,magnitude,rxns,iDU,time,iofolder,scen)

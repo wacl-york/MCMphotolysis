@@ -66,7 +66,7 @@ function getO3files(scen, output)
 
   # Define TUV file
   filelist=readdir()
-  idx=findall(startswith.(filelist,scen) .& endswith.(filelist,".txt"))
+  idx=findall(startswith.(filelist,scen*".") .& endswith.(filelist,".txt"))
   o3col=filelist[idx]
   o3col=[replace(o, "$scen." => "") for o in o3col]
   o3col=[replace(o, ".txt" => "") for o in o3col]

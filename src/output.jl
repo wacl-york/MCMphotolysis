@@ -49,8 +49,42 @@ end #function plot_j
 
 
 """
-function plotl(jvals, l, m, n)
-  body
+function plotl(ldat, l, m, n, order, O3col, ptitle, iofolder, systime, output)
+
+  # Only print, if output is set to true
+  if output == false  return  end
+
+  # Initialise array of plots and define x data
+  opfile = pdf[:PdfPages]("$iofolder/lpar.pdf")
+  # Loop over reactions
+  @showprogress 1 "plot l..." for i = 1:length(ptitle)
+    # define parameters
+    # Calculate parameterised values
+    o3 = collect(O3col[1]:O3col[end])
+    lpar = lnew(o3, l[i])/10^order[i] #lnew is defined in fitTUV.jl
+    # Load TUV data and parameterisation for plotting
+    ldata  = pyp.load_PlotData(DataFrame(o3=O3col, l=ldat[i,:]./10^order[i]),
+                 label = "l data", pt = "s", lc = "black", lt = "None")
+    lparam = pyp.load_PlotData(DataFrame(o3=o3, l=lpar), lc = "red", lw = 2,
+                 label="fit")
+    # Plot TUV data
+
+    fig, ax = pyp.plot_data(ldata, lparam, ti = ptitle[i],
+    xlabel = "ozone column / DU",
+    ylabel = "l / 10\$^{$(Int(order[i]))}\\,\$s\$^{-1}\$",
+    xlims=(O3col[1],O3col[end]),ti_offset=-2,
+    legpos="upper right")
+    # Plot time stamp
+    ax[:annotate]("created $(Dates.format(systime,"dd.mm.yyyy, HH:MM:SS"))",
+          xy=[0.2;0.9], xycoords="axes fraction", ha="left", va="bottom")
+
+    # save plot to temporary png
+    opfile[:savefig](fig)
+    close()
+  end
+
+  # compile pngs in single pdf and delete pngs
+  opfile[:close]()
 end
 
 
@@ -98,7 +132,6 @@ function beautify_chem(reactions::Vector{Symbol})
   chem = String[]
   # Loop over reactions and reformat with LaTeX
   for rxn in strip.(string.(reactions))
-    println(rxn)
     lstr = replace(rxn, "->" => "\\stackrel{h\\nu}{\\longrightarrow}") # format arrows
     lstr = replace(lstr, " + hv" => "") # remove + hv (now above formatted arrows)
     lstr = replace(lstr, r"([A-Za-z)])([0-9]+)" => s"\1_{\2}") # make numbers in chemical formulas subscripts: {\1}_{\2}
