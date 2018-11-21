@@ -105,8 +105,10 @@ function wrt_params(jvals, params, stats, iofolder, systime)
     "Parameters and statistical data for parameterisation of photolysis processes")
     println(f,
     "in the Master Chemical Mechanism (MCM; http://mcm.york.ac.uk/) using:")
-    println(f, "\nj / s-1 = l·(cos(x))^m·exp(-n·sec(x))")
-    println(f, "\n\ncreated $(Dates.format(systime,"dd.mm.yyyy, HH:MM:SS"))")
+    println(f, "\nj / s-1 = l·(cos(x))^m·exp(-n·sec(x))\n")
+    println(f, "Fits and standard errors are derived with Julia package LsqFit v0.6.0")
+    println(f, "(https://github.com/JuliaNLSolvers/LsqFit.jl.git).")
+    println(f, "created $(Dates.format(systime,"dd.mm.yyyy, HH:MM:SS"))")
     println(f,"\n                 P a r a m e t e r s               S t a t i s t i c s")
     println(f,"     l / s-1              m              n         RMSE / s-1    R^2      Reaction")
 
@@ -120,6 +122,58 @@ function wrt_params(jvals, params, stats, iofolder, systime)
     end
   end
 end # function wrt_params
+
+
+function wrt_newparams(jvals, params, iofolder, systime, output)
+
+  # Only print, if output is set to true
+  if output == false  return  end
+
+  # Open formatted output file
+  open("$iofolder/parameters.dat","w") do f
+    # Print header
+    println(f,
+    "Improved parameters and standard errors for parameterisation of photolysis processes")
+    println(f,
+    "in the Master Chemical Mechanism (MCM; http://mcm.york.ac.uk/) using:")
+    println(f, "\nj / s-1 = l(O3)·(cos(x))^m·exp(-n·sec(x))\n")
+    println(f, "with\nl(O3) = l_a0 + l_b0·exp(-O3/l_b1) + l_c0·exp(-O3/l_c1)\n")
+    println(f, "Fits and standard errors are derived with Julia package LsqFit v0.6.0")
+    println(f, "(https://github.com/JuliaNLSolvers/LsqFit.jl.git).")
+    println(f, "created $(Dates.format(systime,"dd.mm.yyyy, HH:MM:SS"))\n")
+    println(f,"   l_a0 / s-1           l_b0 / s-1         l_b1 / DU         ",
+      "l_c0 / s-1         l_c1 / DU           m              n         Reaction")
+
+    # Loop over reactions
+    for i = 1:length(jvals[1].rxn)
+      # Print parameters, errors, and reaction label to output file
+      @printf(f,"(%6.3f±%.3f)e%d    (%6.3f±%.3f)e%d   %7.2f±%5.2f    (%6.3f±%.3f)e%d   %7.2f±%5.2f    %.3f±%.3f    %.3f±%.3f    %s\n",
+      params.l[i][1]/10^jvals[1].order[i], params.sigma[i][1]/10^jvals[1].order[i], Int(jvals[1].order[i]),
+      params.l[i][2]/10^jvals[1].order[i], params.sigma[i][2]/10^jvals[1].order[i], Int(jvals[1].order[i]),
+      params.l[i][3], params.sigma[i][3],
+      params.l[i][4]/10^jvals[1].order[i], params.sigma[i][4]/10^jvals[1].order[i], Int(jvals[1].order[i]),
+      params.l[i][5], params.sigma[i][5], params.m[i], params.sigma[i][6], params.n[i], params.sigma[i][7],
+      jvals[1].rxn[i])
+    end
+  end
+
+  # Open csv output file
+  open("$iofolder/parameters.csv","w") do f
+    # Print header
+    println(f, "l_a0,l_b0,l_b1,l_c0,l_c1,m,n,sigma l_a0,sigma l_b0,sigma l_b1,",
+      "sigma l_c0,sigma l_c1,sigma m,sigma n,rxn label")
+
+    # Loop over reactions
+    for i = 1:length(jvals[1].rxn)
+      # Print parameters, errors, and reaction label to output file
+      @printf(f,"%.3e,%.3e,%.2f,%.3e,%.2f,%.3f,%.3f,%.3e,%.3e,%.2f,%.3e,%.2f,%.3f,%.3f,%s\n",
+      params.l[i][1], params.l[i][2], params.l[i][3], params.l[i][4], params.l[i][5],
+      params.m[i], params.n[i], params.sigma[i][1], params.sigma[i][2],
+      params.sigma[i][3], params.sigma[i][4], params.sigma[i][5],
+      params.sigma[i][6], params.sigma[i][7], jvals[1].rxn[i])
+    end
+  end
+end #function wrt_newparams
 
 
 """

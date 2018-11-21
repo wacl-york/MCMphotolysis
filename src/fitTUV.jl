@@ -104,7 +104,7 @@ function fitl(ldata, order, o3col, params350, rxn)
     l[[1,2,4]] *= 10^order[i]
     push!(lpar, l)
     errl = standard_error(fit)
-    sigmal = (l./errl.*10^order[i] .+ params350.sigma[i][1]/params350.l[i]).*l
+    sigmal = abs.((l./errl.*10^order[i] .+ params350.sigma[i][1]/params350.l[i]).*l)
     push!(sigmas, vcat(sigmal, params350.sigma[i][2:3]))
     push!(converged, !fail)
   end

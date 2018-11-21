@@ -143,8 +143,7 @@ function j_parameters(scen::String;
 
   ptitle = beautify_chem(jvals[1].rxn)
   plotl(ldata, params, jvals[1].order, O3col, ptitle, iofolder, systime, output)
-  # parMCM, sigMCM, jMCM, fit = fit_j(TUVdata, params350, o3col, χ, iDU, rxns)
-  #
+  wrt_newparams(jvals, params, iofolder, systime, output)
   # plot_j(sza,χ,O3col,TUVdata,jMCM,magnitude,rxns,iDU,time,iofolder,scen)
 
   return jvals, params
