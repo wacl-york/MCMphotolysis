@@ -39,18 +39,10 @@ import pyp
 - `converged::Vector{Bool}`: Flags, whether the fit in each reaction has converged
 """
 struct PhotData
-  # jval::DataFrame
-  # order::Vector{Float64}
-  # rxn::Vector{String}
-  # deg::Vector{Float64}
-  # rad::Vector{Float64}
-  # O3col::Number
-  l::Union{Vector{Float64},Vector{Vector{Float64}}}
+  l::Union{Vector{Float64},Vector{Any}}
   m::Vector{Float64}
   n::Vector{Float64}
   sigma::Vector{Vector{Float64}}
-  # RMSE::Vector{Float64}
-  # R2::Vector{Float64}
   converged::Vector{Bool}
 end
 
@@ -147,18 +139,15 @@ function j_parameters(scen::String;
   jvals = getTUVdata(inpfile, O3col)
 
   ldata, params350 = getMCMparams(jvals, O3col)
-  lpar, lfit = fitl(ldata, jvals[1].order, O3col, jvals[1].rxn)
-  println("1: ",lpar[1])
+  params = fitl(ldata, jvals[1].order, O3col, params350, jvals[1].rxn)
 
   ptitle = beautify_chem(jvals[1].rxn)
-  plotl(ldata, lpar, params350.m, params350.n, jvals[1].order, O3col,
-    ptitle, iofolder, systime, output)
-  println("2: ",lpar[1])
+  plotl(ldata, params, jvals[1].order, O3col, ptitle, iofolder, systime, output)
   # parMCM, sigMCM, jMCM, fit = fit_j(TUVdata, params350, o3col, χ, iDU, rxns)
   #
   # plot_j(sza,χ,O3col,TUVdata,jMCM,magnitude,rxns,iDU,time,iofolder,scen)
 
-  return jvals, lpar, ldata, params350, lfit#, lpar sza, TUVdata, fit
+  return jvals, params
 end #function j_parameters
 
 end # module MCMphotolysis

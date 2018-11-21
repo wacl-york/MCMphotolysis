@@ -34,8 +34,8 @@ function fit_jold(jvals)
   l = [fit[i].param[1].*10^jvals.order[i] for i = 1:length(fit)]
   m = [fit[i].param[2] for i = 1:length(fit)]
   n = [fit[i].param[3] for i = 1:length(fit)]
-  sigma = [10^jvals.order[i].*sigma[i] for i = 1:length(sigma)]
-  rmse  = [10^jvals.order[i].*rmse[i] for i = 1:length(rmse)]
+  sigma = [[10^jvals.order[i], 1., 1.].*sigma[i] for i = 1:length(sigma)]
+  rmse  = [10^jvals.order[i]*rmse[i] for i = 1:length(rmse)]
 
   return PhotData(l, m, n, sigma, conv), StatData(rmse, R2)
 end #function fit_j
@@ -50,7 +50,6 @@ ozone column, and vectors of the m and n parameters for the original MCM photoly
 parameterisations of every photolysis reaction in `jvals`.
 """
 function getMCMparams(jvals, O3col)
-  fit = []
   iO3 = findlast(O3col .≤ 350)
   params350, stats350 = fit_jold(jvals[iO3])
   l = zeros(Float64, length(jvals[iO3].rxn), length(O3col))
@@ -70,9 +69,9 @@ From vector `l` with vectors of l parameters for every ozone column and every
 photolysis reaction  and vector `o3col` with the ozone column values, return
 a Matrix with the revised parameters for the ozone column dependent new l parameter.
 """
-function fitl(ldata, order, o3col, rxn)
+function fitl(ldata, order, o3col, params350, rxn)
   # Initialise
-  lpar = []; fits = []
+  lpar = []; sigmas = []; converged = []
   o3 = convert.(Float64, o3col)
   ldata ./= [10^o for o in order]
   # Loop over reactions
@@ -81,15 +80,15 @@ function fitl(ldata, order, o3col, rxn)
     # Fit l parameter to ozone column dependence
     fit = curve_fit(lnew, o3, ldata[i,:], p0)
     # Adjust initial guesses for non-convergence
-    fit, fits, fail = convergel(o3, ldata[i,:], fit, fits, "p0", 5,
+    fit, fail = convergel(o3, ldata[i,:], fit, "p0", 5,
       ["\033[36mINFO:\033[0m Reaction $i ($(rxn[i])) converged after ",
       " interations."])
     # Drop lowest ozone column values for non-convergence
-    fit, fits, fail = convergel(o3, ldata[i,:], fit, fits, "low", 3,
+    fit, fail = convergel(o3, ldata[i,:], fit, "low", 3,
       ["\033[36mINFO:\033[0m Reaction $i ($(rxn[i])) converged after dropping lowest ",
       " O3 column values."])
     # Drop highest ozone column values for non-convergence
-    fit, fits, fail = convergel(o3, ldata[i,:], fit, fits, "high", 3,
+    fit, fail = convergel(o3, ldata[i,:], fit, "high", 3,
       ["\033[36mINFO:\033[0m Reaction $i ($(rxn[i])) converged after dropping highest ",
         " O3 column values."])
     # Warn, if convergence couldn't be reached
@@ -100,15 +99,18 @@ function fitl(ldata, order, o3col, rxn)
 
     # Calculate errors
 
-    # Save improved l parameters
+    # Save improved l parameters and standard deviations
     l  = deepcopy(fit.param)
     l[[1,2,4]] *= 10^order[i]
     push!(lpar, l)
-    push!(fits, fit)
+    errl = standard_error(fit)
+    sigmal = (l./errl.*10^order[i] .+ params350.sigma[i][1]/params350.l[i]).*l
+    push!(sigmas, vcat(sigmal, params350.sigma[i][2:3]))
+    push!(converged, !fail)
   end
   ldata .*= [10^o for o in order]
 
-  return lpar, fits
+  return PhotData(lpar, params350.m, params350.n, sigmas, converged)
 end
 
 
@@ -123,7 +125,7 @@ refitting `lpar` (Matrix with l parameters of every reaction for every ozone col
 until convergence is reached and print warning on success.
 """
 function convergel(o3col::Vector{Float64}, lpar::Vector{Float64},
-         fit::LsqFit.LsqFitResult, fits, test::String, maxtry::Int64, error_msg::Vector{String})
+         fit::LsqFit.LsqFitResult, test::String, maxtry::Int64, error_msg::Vector{String})
   counter = 0; fail = false
   while !fit.converged
     counter += 1
@@ -143,7 +145,7 @@ function convergel(o3col::Vector{Float64}, lpar::Vector{Float64},
     end
   end
 
-  return fit, fits, fail
+  return fit, fail
 end
 
 

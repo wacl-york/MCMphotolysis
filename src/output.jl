@@ -50,7 +50,7 @@ end #function plot_j
 
 
 """
-function plotl(ldat, l, m, n, order, O3col, ptitle, iofolder, systime, output)
+function plotl(ldat, params, order, O3col, ptitle, iofolder, systime, output)
 
   # Only print, if output is set to true
   if output == false  return  end
@@ -62,7 +62,7 @@ function plotl(ldat, l, m, n, order, O3col, ptitle, iofolder, systime, output)
     # define parameters
     # Calculate parameterised values
     o3 = collect(O3col[1]:O3col[end])
-    lpar = lnew(o3, l[i])/10^order[i] #lnew is defined in fitTUV.jl
+    lpar = lnew(o3, params.l[i])/10^order[i] #lnew is defined in fitTUV.jl
     # Load TUV data and parameterisation for plotting
     ldata  = pyp.load_PlotData(DataFrame(o3=O3col, l=ldat[i,:]./10^order[i]),
                  label = "l data", pt = "s", lc = "black", lt = "None")
