@@ -5,20 +5,21 @@ Plot j values saved in `jvals[:jvals]` and parameterisations derived from parame
 in `jvals[:fit]` to file `ifile.pdf` in the `iofolder` together with the
 `systime` of creation.
 """
-function plot_jold(jvals::PhotData,systime::DateTime,iofolder::String,ifile::String)
+function plot_jold(jvals::filehandling.TUVdata, params::PhotData,systime::DateTime,
+  iofolder::String,ifile::String)
 
   # Format titles with Latex using header of jvals
-  ptitle = beautify_chem(names(jvals.jval))
+  ptitle = beautify_chem(jvals.rxn)
 
   # Initialise array of plots and define x data
   opfile = pdf[:PdfPages]("$iofolder/$ifile.pdf")
 
   # Loop over all reactions
-  @showprogress 1 "plot data..." for i=1:length(jvals.l)
+  @showprogress 1 "plot data..." for i=1:length(params.l)
     # define parameters
     # Calculate parameterised values
     χ = collect(0:π/360:π/2)
-    jpar = jvals.l[i]./10^jvals.order[i].⋅cos.(χ).^jvals.m[i].⋅exp.(-jvals.n[i].⋅sec.(χ))
+    jpar = params.l[i]./10^jvals.order[i].⋅cos.(χ).^params.m[i].⋅exp.(-params.n[i].⋅sec.(χ))
     # Load TUV data and parameterisation for plotting
     jplt = pyp.load_PlotData(DataFrame(χ=jvals.deg, j=jvals.jval[i]./10^jvals.order[i]),
                             label = "TUV data", pt = "s", lc = "black", lt = "None")
@@ -95,7 +96,7 @@ Write the parameters, statistical data, and reaction labels stored in the
 dictionary `jvals` to the file `parameters.dat` in the `iofolder` and state
 the `systime` of creation.
 """
-function wrt_params(jvals, iofolder, systime)
+function wrt_params(jvals, params, stats, iofolder, systime)
 
   # Open output file
   open("$iofolder/parameters.dat","w") do f
@@ -113,9 +114,9 @@ function wrt_params(jvals, iofolder, systime)
     for i = 1:length(jvals.rxn)
       # Print parameters, statistical data, and reaction label to output file
       @printf(f,"(%6.3f±%.3f)e%d    %.3f±%.3f    %.3f±%.3f    %.3e    %.4f    %s\n",
-      jvals.l[i]/10^jvals.order[i], jvals.sigma[i][1]/10^jvals.order[i], Int(jvals.order[i]),
-      jvals.m[i], jvals.sigma[i][2], jvals.n[i], jvals.sigma[i][3],
-      jvals.RMSE[i], jvals.R2[i], jvals.rxn[i])
+      params.l[i]/10^jvals.order[i], params.sigma[i][1]/10^jvals.order[i], Int(jvals.order[i]),
+      params.m[i], params.sigma[i][2], params.n[i], params.sigma[i][3],
+      stats.RMSE[i], stats.R2[i], jvals.rxn[i])
     end
   end
 end # function wrt_params
@@ -126,12 +127,12 @@ end # function wrt_params
 
 Format `reactions` with LaTeX for nicer titles in plots.
 """
-function beautify_chem(reactions::Vector{Symbol})
+function beautify_chem(reactions::Vector{String})
 
   # Initialise output
   chem = String[]
   # Loop over reactions and reformat with LaTeX
-  for rxn in strip.(string.(reactions))
+  for rxn in reactions
     lstr = replace(rxn, "->" => "\\stackrel{h\\nu}{\\longrightarrow}") # format arrows
     lstr = replace(lstr, " + hv" => "") # remove + hv (now above formatted arrows)
     lstr = replace(lstr, r"([A-Za-z)])([0-9]+)" => s"\1_{\2}") # make numbers in chemical formulas subscripts: {\1}_{\2}

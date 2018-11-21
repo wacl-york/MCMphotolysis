@@ -6,7 +6,7 @@ Derive MCM parameterisations for DataFrame `jvals` with `sza`-dependent _j_ valu
 
 The Vector of solar zenith angles `sza` must be in rad.
 """
-function fit_jold(jvals, o3col)
+function fit_jold(jvals)
 
   # Initialise arrays for fitting data
   fit = []; sigma = []; rmse = []; R2 = []
@@ -21,7 +21,7 @@ function fit_jold(jvals, o3col)
     # Derive fit
     push!(fit, curve_fit(jold, jvals.rad, jvals.jval[i] ./ 10^jvals.order[i], p0))
     # Derive sigma with 95% confidence
-    push!(sigma, margin_error(fit[i],0.05))
+    push!(sigma, standard_error(fit[i]))
     # Calculate statistical data for RMSE and R^2
     ss_err = sum(fit[i].resid.^2)
     ss_tot = sum((jvals.jval[i].-mean(jvals.jval[i])).^2)
@@ -37,10 +37,7 @@ function fit_jold(jvals, o3col)
   sigma = [10^jvals.order[i].*sigma[i] for i = 1:length(sigma)]
   rmse  = [10^jvals.order[i].*rmse[i] for i = 1:length(rmse)]
 
-  jdata = PhotData(jvals.jval, jvals.order, jvals.rxn, jvals.deg, jvals.rad,
-    o3col, l, m, n, sigma, rmse, R2, conv)
-
-  return jdata
+  return PhotData(l, m, n, sigma, conv), StatData(rmse, R2)
 end #function fit_j
 
 
@@ -55,13 +52,13 @@ parameterisations of every photolysis reaction in `jvals`.
 function getMCMparams(jvals, O3col)
   fit = []
   iO3 = findlast(O3col .≤ 350)
-  j350 = fit_jold(jvals[iO3], O3col[iO3])
+  params350, stats350 = fit_jold(jvals[iO3])
   l = zeros(Float64, length(jvals[iO3].rxn), length(O3col))
   for o3 = 1:length(O3col), jmax = 1:length(jvals[iO3].rxn)
-    l[jmax, o3] = jvals[o3].jval[jmax][1]/exp(-j350.n[jmax])
+    l[jmax, o3] = jvals[o3].jval[jmax][1]/exp(-params350.n[jmax])
   end
 
-  return l, j350
+  return l, params350
   # Loop over initial guesses, otherwise drop low o3col value
 end
 
@@ -73,26 +70,26 @@ From vector `l` with vectors of l parameters for every ozone column and every
 photolysis reaction  and vector `o3col` with the ozone column values, return
 a Matrix with the revised parameters for the ozone column dependent new l parameter.
 """
-function fitl(l, order, o3col, rxn)
+function fitl(ldata, order, o3col, rxn)
   # Initialise
-  lpar = []
+  lpar = []; fits = []
   o3 = convert.(Float64, o3col)
-  l ./= [10^o for o in order]
+  ldata ./= [10^o for o in order]
   # Loop over reactions
-  for i = 1:length(l[:,1])
-    p0 = [0.,l[i,1],100.,l[i,1],100.]
+  for i = 1:length(ldata[:,1])
+    p0 = [0.,ldata[i,1],100.,ldata[i,1],100.]
     # Fit l parameter to ozone column dependence
-    fit = curve_fit(lnew, o3, l[i,:], p0)
+    fit = curve_fit(lnew, o3, ldata[i,:], p0)
     # Adjust initial guesses for non-convergence
-    fit, fail = convergel(o3, l[i,:], fit, "p0", 5,
+    fit, fits, fail = convergel(o3, ldata[i,:], fit, fits, "p0", 5,
       ["\033[36mINFO:\033[0m Reaction $i ($(rxn[i])) converged after ",
       " interations."])
     # Drop lowest ozone column values for non-convergence
-    fit, fail = convergel(o3, l[i,:], fit, "low", 3,
+    fit, fits, fail = convergel(o3, ldata[i,:], fit, fits, "low", 3,
       ["\033[36mINFO:\033[0m Reaction $i ($(rxn[i])) converged after dropping lowest ",
       " O3 column values."])
     # Drop highest ozone column values for non-convergence
-    fit, fail = convergel(o3, l[i,:], fit, "high", 3,
+    fit, fits, fail = convergel(o3, ldata[i,:], fit, fits, "high", 3,
       ["\033[36mINFO:\033[0m Reaction $i ($(rxn[i])) converged after dropping highest ",
         " O3 column values."])
     # Warn, if convergence couldn't be reached
@@ -100,13 +97,18 @@ function fitl(l, order, o3col, rxn)
       print("\033[95mFitting of parameter l did not converge for reaction ")
       println("$i:\033[0m $(string(rxn[i])).")
     end
-    # Save improved l parameters
-    fit.param[[1,2,4]] = fit.param[[1,2,4]]*10^order[i]
-    push!(lpar, fit.param)
-  end
-  l .*= [10^o for o in order]
 
-  return lpar
+    # Calculate errors
+
+    # Save improved l parameters
+    l  = deepcopy(fit.param)
+    l[[1,2,4]] *= 10^order[i]
+    push!(lpar, l)
+    push!(fits, fit)
+  end
+  ldata .*= [10^o for o in order]
+
+  return lpar, fits
 end
 
 
@@ -121,7 +123,7 @@ refitting `lpar` (Matrix with l parameters of every reaction for every ozone col
 until convergence is reached and print warning on success.
 """
 function convergel(o3col::Vector{Float64}, lpar::Vector{Float64},
-         fit::LsqFit.LsqFitResult, test::String, maxtry::Int64, error_msg::Vector{String})
+         fit::LsqFit.LsqFitResult, fits, test::String, maxtry::Int64, error_msg::Vector{String})
   counter = 0; fail = false
   while !fit.converged
     counter += 1
@@ -141,7 +143,7 @@ function convergel(o3col::Vector{Float64}, lpar::Vector{Float64},
     end
   end
 
-  return fit, fail
+  return fit, fits, fail
 end
 
 

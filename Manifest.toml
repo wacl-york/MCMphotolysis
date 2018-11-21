@@ -26,10 +26,10 @@ uuid = "49dc2e85-a5d0-5ad3-a950-438e2897f1b9"
 version = "0.4.1"
 
 [[CategoricalArrays]]
-deps = ["Compat", "Future", "JSON", "Missings", "Printf", "Reexport"]
-git-tree-sha1 = "6362c49130b5888f5628bc197ee5f17aec7d2a88"
+deps = ["Compat", "Future", "Missings", "Printf", "Reexport", "Requires"]
+git-tree-sha1 = "64651a0315fc342e7e35d03d67b2da920937c9be"
 uuid = "324d7699-5711-5eae-9e2f-1d82baa6b597"
-version = "0.4.0"
+version = "0.5.0"
 
 [[CodecZlib]]
 deps = ["BinaryProvider", "Libdl", "Test", "TranscodingStreams"]
@@ -228,10 +228,10 @@ uuid = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
 version = "0.3.2"
 
 [[OhMyREPL]]
-deps = ["Crayons", "Markdown", "Pkg", "Printf", "REPL", "Test", "Tokenize"]
-git-tree-sha1 = "e00d5394d110afe279101ffe10cebd11eaedcb8a"
+deps = ["Crayons", "Logging", "Markdown", "Pkg", "Printf", "REPL", "Test", "Tokenize"]
+git-tree-sha1 = "33e70d910da8a2af6cc8f0b7fb25f56192c8d714"
 uuid = "5fb14364-9ced-5910-84b2-373655c76a03"
-version = "0.3.0"
+version = "0.4.0"
 
 [[OptimBase]]
 deps = ["Compat", "NLSolversBase", "Printf", "Reexport", "Test"]
@@ -253,9 +253,9 @@ version = "0.9.5"
 
 [[Parameters]]
 deps = ["Markdown", "OrderedCollections", "REPL", "Test"]
-git-tree-sha1 = "40f540ec96e50c0b2b9efdb11b5e4d0c63f90923"
+git-tree-sha1 = "eec0fe16344cc14aa2e6251874ab30d62aff4f7c"
 uuid = "d96e819e-fc66-5662-9728-84c9c7592b0a"
-version = "0.10.1"
+version = "0.10.2"
 
 [[Pkg]]
 deps = ["Dates", "LibGit2", "Markdown", "Printf", "REPL", "Random", "SHA", "UUIDs"]
@@ -429,11 +429,11 @@ version = "0.5.3"
 
 [[filehandling]]
 deps = ["DataFrames", "Juno"]
-git-tree-sha1 = "53462fb425195908312c3b1579d1494dab48a08c"
+git-tree-sha1 = "967a591ec9d6fdf02321d4a022616b9c0df98abb"
 repo-rev = "master"
 repo-url = "https://github.com/pb866/filehandling.git"
 uuid = "4b8ed5e0-8069-11e8-094b-3f5425e6acdd"
-version = "0.2.1"
+version = "0.2.2"
 
 [[pyp]]
 deps = ["DataFrames", "Dates", "LaTeXStrings", "LinearAlgebra", "OhMyREPL", "Parameters", "PyPlot", "filehandling"]

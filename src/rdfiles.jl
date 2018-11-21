@@ -20,7 +20,7 @@ function setup_files(scen, output)
   catch
     print("\033[95mFolder '$iofolder' already exists! Overwrite ")
     confirm = input("(\033[4mY\033[0m\033[95mes/\033[4mN\033[0m\033[95mo)?\033[0m ")
-    if lowercase(confirm[1]) == 'y'
+    if !isempty(confirm) && lowercase(confirm[1]) == 'y'
       cd(iofolder); files = readdir(); [rm(file) for file in files ]; cd("..")
     else println("Programme aborted. Exit code '98'."); exit(98)
     end
@@ -58,7 +58,7 @@ function getO3files(scen, output)
   catch
     print("\033[95mFolder '$iofolder' already exists! Overwrite ")
     confirm = input("(\033[4mY\033[0m\033[95mes/\033[4mN\033[0m\033[95mo)?\033[0m ")
-    if lowercase(confirm[1:1]) == "y"
+    if !isempty(confirm) && lowercase(confirm[1:1]) == "y"
       cd(iofolder); files = readdir(); for file in files  rm(file)  end; cd("..")
     else println("Programme aborted. Exit code '98'."); exit(98)
     end
@@ -79,16 +79,16 @@ end #function get_fnames
 
 
 """
-    getTUVdata(inpfile)
+    getTUVdata(inpfile, O3col)
 
-From vector `inpfile` with file names of all ozone scenarios get a dictionary
-wit j value related data.
+From vector `inpfile` with file names of all ozone scenarios and vector `O3col`
+with all ozone column values, get a vector of `TUVdata` with j value related data.
 """
-function getTUVdata(inpfile)
+function getTUVdata(inpfile, O3col)
   # Read j values
   jvals = []
-  for f in inpfile
-    j = readTUV(f)
+  for i = 1:length(inpfile)
+    j = readTUV(inpfile[i], O3col[i])
     push!(jvals, j)
   end
 

@@ -22,20 +22,49 @@ using filehandling
 import pyp
 
 ### NEW TYPES
+"""
+    struct PhotData
+
+`PhotData` has the following fields:
+- `l::Union{Vector{Float64},Vector{Vector{Float64}}}`: Either a vector of floats for the
+  original parameterisation or a vector of vectors of floats for the updated `l` parameter
+  in the MCM photolysis parameterisation in every reaction of TUV
+- `m::Vector{Float64}`: Vector of floats with `m` parameters of the MCM photolysis parameterisation
+  for every reaction in TUV
+- `n::Vector{Float64}`: Vector of floats with `n` parameters of the MCM photolysis parameterisation
+  for every reaction in TUV
+- `sigma::Vector{Vector{Float64}}`: Vector with vectors of floats holding all standard
+  deviations for every parameter of the MCM photolysis parameterisation in every reaction
+  of TUV in the order l or updated l_0, l_1, l_2, l_3, and l_4, m, and n
+- `converged::Vector{Bool}`: Flags, whether the fit in each reaction has converged
+"""
 struct PhotData
-  jval::DataFrame
-  order::Vector{Float64}
-  rxn::Vector{String}
-  deg::Vector{Float64}
-  rad::Vector{Float64}
-  O3col::Number
+  # jval::DataFrame
+  # order::Vector{Float64}
+  # rxn::Vector{String}
+  # deg::Vector{Float64}
+  # rad::Vector{Float64}
+  # O3col::Number
   l::Union{Vector{Float64},Vector{Vector{Float64}}}
   m::Vector{Float64}
   n::Vector{Float64}
   sigma::Vector{Vector{Float64}}
+  # RMSE::Vector{Float64}
+  # R2::Vector{Float64}
+  converged::Vector{Bool}
+end
+
+
+"""
+    struct StatData
+
+Immutable structure with additional statistical data `RMSE` and `R2` (correlation factor)
+for the original MCM photolysis parameterisation. Data is stored in vectors of floats
+for every TUV reaction.
+"""
+struct StatData
   RMSE::Vector{Float64}
   R2::Vector{Float64}
-  converged::Vector{Bool}
 end
 
 
@@ -84,16 +113,16 @@ function j_oldpars(scen::String; output::Bool=true, O3col::Number=350)
   # Read dataframe with j values from TUV output file
   println("load data...")
   ifile, iofolder = setup_files(scen, output)
-  jvals = readTUV(ifile)
+  jvals = readTUV(ifile, O3col)
 
   # Derive parameterisations for j values
-  jvals = fit_jold(jvals, O3col)
+  params, stats = fit_jold(jvals)
 
   if output
-    plot_jold(jvals,systime,iofolder,scen)
-    wrt_params(jvals,iofolder,systime)
+    plot_jold(jvals,params,systime,iofolder,scen)
+    wrt_params(jvals,params,stats,iofolder,systime)
   end
-  return jvals
+  return jvals, params, stats
 end #function j_oldpars
 
 """
@@ -115,18 +144,21 @@ function j_parameters(scen::String;
 
   # Read TUV data and get original l parameters and m, n parameters for 350DU
   # Data is rescaled to exclude the order of magnitude
-  jvals = getTUVdata(inpfile)
+  jvals = getTUVdata(inpfile, O3col)
 
-  l, j350 = getMCMparams(jvals, O3col)
-  lpar = fitl(l, j350.order, O3col, names(jvals[1].jval))
+  ldata, params350 = getMCMparams(jvals, O3col)
+  lpar, lfit = fitl(ldata, jvals[1].order, O3col, jvals[1].rxn)
+  println("1: ",lpar[1])
 
-  ptitle = beautify_chem(names(j350.jval))
-  plotl(l, lpar, j350.m, j350.n, j350.order, O3col, ptitle, iofolder, systime, output)
+  ptitle = beautify_chem(jvals[1].rxn)
+  plotl(ldata, lpar, params350.m, params350.n, jvals[1].order, O3col,
+    ptitle, iofolder, systime, output)
+  println("2: ",lpar[1])
   # parMCM, sigMCM, jMCM, fit = fit_j(TUVdata, params350, o3col, χ, iDU, rxns)
   #
   # plot_j(sza,χ,O3col,TUVdata,jMCM,magnitude,rxns,iDU,time,iofolder,scen)
 
-  return jvals, lpar, l, j350#, lpar sza, TUVdata, fit
+  return jvals, lpar, ldata, params350, lfit#, lpar sza, TUVdata, fit
 end #function j_parameters
 
 end # module MCMphotolysis
