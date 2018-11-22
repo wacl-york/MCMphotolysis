@@ -112,8 +112,8 @@ function j_oldpars(scen::String; output::Bool=true, O3col::Number=350)
 
   # Write output
   if output
-    plot_jold(jvals,params,systime,iofolder)
     wrt_params(jvals,params,stats,iofolder,systime)
+    plot_jold(jvals,params,systime,iofolder)
   end
   return jvals, params, stats
 end #function j_oldpars
@@ -143,7 +143,7 @@ function j_parameters(scen::String;
   params = fitl(ldata, jvals[1].order, O3col, params350, jvals[1].rxn)
 
   # Write output
-  ptitle = beautify_chem(jvals[1].rxn)
+  ptitle = set_titles(jvals[1])
   wrt_newparams(jvals, params, iofolder, systime, output)
   plotl(ldata, params, jvals[1].order, O3col, ptitle, iofolder, systime, output)
   plotj(jvals, params, ptitle, O3col, output, iofolder, systime)

@@ -9,7 +9,7 @@ function plot_jold(jvals::filehandling.TUVdata, params::PhotData, systime::DateT
   iofolder::String)
 
   # Format titles with Latex using header of jvals
-  ptitle = beautify_chem(jvals.rxn)
+  ptitle = set_titles(jvals)
 
   # Open pdf
   opfile = pdf[:PdfPages]("$iofolder/jvalues.pdf")
@@ -172,10 +172,10 @@ function wrt_params(jvals, params, stats, iofolder, systime)
     # Loop over reactions
     for i = 1:length(jvals.rxn)
       # Print parameters, statistical data, and reaction label to output file
-      @printf(f,"(%6.3f±%.3f)e%d    %.3f±%.3f    %.3f±%.3f    %.3e    %.4f    %s\n",
+      @printf(f,"(%6.3f±%.3f)e%d    %.3f±%.3f    %.3f±%.3f    %.3e    %.4f    J(%d): %s\n",
       params.l[i]/10.0^jvals.order[i], params.sigma[i][1]/10.0^jvals.order[i], jvals.order[i],
       params.m[i], params.sigma[i][2], params.n[i], params.sigma[i][3],
-      stats.RMSE[i], stats.R2[i], jvals.rxn[i])
+      stats.RMSE[i], stats.R2[i], jvals.mcm[i], jvals.rxn[i])
     end
   end
 end # function wrt_params
@@ -211,13 +211,13 @@ function wrt_newparams(jvals, params, iofolder, systime, output)
     # Loop over reactions
     for i = 1:length(jvals[1].rxn)
       # Print parameters, errors, and reaction label to output file
-      @printf(f,"(%6.3f±%.3f)e%d    (%6.3f±%.3f)e%d   %7.2f±%5.2f    (%6.3f±%.3f)e%d   %7.2f±%5.2f    %.3f±%.3f    %.3f±%.3f    %s\n",
+      @printf(f,"(%6.3f±%.3f)e%d    (%6.3f±%.3f)e%d   %7.2f±%5.2f    (%6.3f±%.3f)e%d   %7.2f±%5.2f    %.3f±%.3f    %.3f±%.3f    J(%d): %s\n",
       params.l[i][1]/10.0^jvals[1].order[i], params.sigma[i][1]/10.0^jvals[1].order[i], jvals[1].order[i],
       params.l[i][2]/10.0^jvals[1].order[i], params.sigma[i][2]/10.0^jvals[1].order[i], jvals[1].order[i],
       params.l[i][3], params.sigma[i][3],
       params.l[i][4]/10.0^jvals[1].order[i], params.sigma[i][4]/10.0^jvals[1].order[i], jvals[1].order[i],
       params.l[i][5], params.sigma[i][5], params.m[i], params.sigma[i][6], params.n[i], params.sigma[i][7],
-      jvals[1].rxn[i])
+      jvals[1].mcm[i], jvals[1].rxn[i])
     end
   end
 
@@ -225,32 +225,33 @@ function wrt_newparams(jvals, params, iofolder, systime, output)
   open("$iofolder/parameters.csv","w") do f
     # Print header
     println(f, "l_a0,l_b0,l_b1,l_c0,l_c1,m,n,sigma l_a0,sigma l_b0,sigma l_b1,",
-      "sigma l_c0,sigma l_c1,sigma m,sigma n,rxn label")
+      "sigma l_c0,sigma l_c1,sigma m,sigma n,MCM rxn number,TUV rxn number,rxn label")
 
     # Loop over reactions
     for i = 1:length(jvals[1].rxn)
       # Print parameters, errors, and reaction label to output file
-      @printf(f,"%.3e,%.3e,%.2f,%.3e,%.2f,%.3f,%.3f,%.3e,%.3e,%.2f,%.3e,%.2f,%.3f,%.3f,%s\n",
+      @printf(f,"%.3e,%.3e,%.2f,%.3e,%.2f,%.3f,%.3f,%.3e,%.3e,%.2f,%.3e,%.2f,%.3f,%.3f,J(%d),%d,%s\n",
       params.l[i][1], params.l[i][2], params.l[i][3], params.l[i][4], params.l[i][5],
       params.m[i], params.n[i], params.sigma[i][1], params.sigma[i][2],
       params.sigma[i][3], params.sigma[i][4], params.sigma[i][5],
-      params.sigma[i][6], params.sigma[i][7], jvals[1].rxn[i])
+      params.sigma[i][6], params.sigma[i][7], jvals[1].mcm[i], jvals[1].tuv[i], jvals[1].rxn[i])
     end
   end
 end #function wrt_newparams
 
 
 """
-    beautify_chem(reactions)
+    set_titles(reactions::filehandling.TUVdata)
 
-Format `reactions` with LaTeX for nicer titles in plots.
+Format `reactions.rxn` with LaTeX for nicer titles in plots and add MCM reaction
+number from `reactions.mcm`.
 """
-function beautify_chem(reactions::Vector{String})
+function set_titles(reactions::filehandling.TUVdata)
 
   # Initialise output
   chem = String[]
   # Loop over reactions and reformat with LaTeX
-  for rxn in reactions
+  for (i, rxn) in enumerate(reactions.rxn)
     lstr = replace(rxn, "->" => "\\stackrel{h\\nu}{\\longrightarrow}") # format arrows
     lstr = replace(lstr, " + hv" => "") # remove + hv (now above formatted arrows)
     lstr = replace(lstr, r"([A-Za-z)])([0-9]+)" => s"\1_{\2}") # make numbers in chemical formulas subscripts: {\1}_{\2}
@@ -264,7 +265,7 @@ function beautify_chem(reactions::Vector{String})
     # define and correct exceptions:
     lstr = replace(lstr, " " => "\\ ") # ensure spaces
     # Ensure unslanted font
-    lstr = "\\mathrm{"*lstr*"}"
+    lstr = "J($(reactions.mcm[i])): \\mathrm{$lstr}"
 
     # Save reformatted reaction to output
     push!(chem, lstr)
@@ -272,4 +273,4 @@ function beautify_chem(reactions::Vector{String})
 
   # Return reformatted output
   return latexstring.(chem)
-end #function beautify_chem
+end #function set_titles

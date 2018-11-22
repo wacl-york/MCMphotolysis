@@ -24,7 +24,8 @@ function fit_jold(jvals)
     push!(sigma, standard_error(fit[i]))
     # Calculate statistical data for RMSE and R^2
     ss_err = sum(fit[i].resid.^2)
-    ss_tot = sum((jvals.jval[i].-mean(jvals.jval[i])).^2)
+    ss_tot = sum((jvals.jval[i]./10.0^jvals.order[i].-
+             mean(jvals.jval[i]./10.0^jvals.order[i])).^2)
     # RMSE
     push!(rmse, √(ss_err/fit[i].dof))
     # R^2
