@@ -110,9 +110,10 @@ function j_oldpars(scen::String; output::Bool=true, O3col::Number=350)
   # Derive parameterisations for j values
   params, stats = fit_jold(jvals)
 
+  # Write output
   if output
-    plot_jold(jvals,params,systime,iofolder,scen)
     wrt_params(jvals,params,stats,iofolder,systime)
+    plot_jold(jvals,params,systime,iofolder)
   end
   return jvals, params, stats
 end #function j_oldpars
@@ -135,17 +136,17 @@ function j_parameters(scen::String;
   inpfile, iofolder, O3col = getO3files(scen, output)
 
   # Read TUV data and get original l parameters and m, n parameters for 350DU
-  # Data is rescaled to exclude the order of magnitude
   jvals = getTUVdata(inpfile, O3col)
 
+  # Collect and fit data
   ldata, params350 = getMCMparams(jvals, O3col)
   params = fitl(ldata, jvals[1].order, O3col, params350, jvals[1].rxn)
 
-  ptitle = beautify_chem(jvals[1].rxn)
+  # Write output
+  ptitle = set_titles(jvals[1])
+  wrt_newparams(jvals, params, iofolder, systime, output)
   plotl(ldata, params, jvals[1].order, O3col, ptitle, iofolder, systime, output)
-  # parMCM, sigMCM, jMCM, fit = fit_j(TUVdata, params350, o3col, χ, iDU, rxns)
-  #
-  # plot_j(sza,χ,O3col,TUVdata,jMCM,magnitude,rxns,iDU,time,iofolder,scen)
+  plotj(jvals, params, ptitle, O3col, output, iofolder, systime)
 
   return jvals, params
 end #function j_parameters
