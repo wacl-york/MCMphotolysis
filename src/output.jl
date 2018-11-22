@@ -5,14 +5,14 @@ Plot j values saved in `jvals[:jvals]` and parameterisations derived from parame
 in `jvals[:fit]` to file `ifile.pdf` in the `iofolder` together with the
 `systime` of creation.
 """
-function plot_jold(jvals::filehandling.TUVdata, params::PhotData,systime::DateTime,
-  iofolder::String,ifile::String)
+function plot_jold(jvals::filehandling.TUVdata, params::PhotData, systime::DateTime,
+  iofolder::String)
 
   # Format titles with Latex using header of jvals
   ptitle = beautify_chem(jvals.rxn)
 
-  # Initialise array of plots and define x data
-  opfile = pdf[:PdfPages]("$iofolder/$ifile.pdf")
+  # Open pdf
+  opfile = pdf[:PdfPages]("$iofolder/jvalues.pdf")
 
   # Loop over all reactions
   @showprogress 1 "plot data..." for i=1:length(params.l)
@@ -41,7 +41,7 @@ function plot_jold(jvals::filehandling.TUVdata, params::PhotData,systime::DateTi
     close()
   end
 
-  # compile pngs in single pdf and delete pngs
+  # close pdf
   opfile[:close]()
 end #function plot_j
 
@@ -50,10 +50,67 @@ end #function plot_j
 
 
 """
+function plotj(jvals, params, ptitle, O3col, output, iofolder, systime)
+
+  # Only plot output set in output flag
+  if typeof(output) == Bool  return  end
+  # Ensure output is an array to be able to loop over it
+  if output isa Number  output = [output]  end
+
+  # Loop over ozone columns
+  for o3 in output
+    # Find index for ozone column in O3col
+    iO3 = findfirst(O3col .== o3)
+    # Open pdf
+    opfile = pdf[:PdfPages]("$iofolder/jvalues.$(o3)DU.pdf")
+
+    # Loop over all reactions
+    @showprogress 1 "plot j@$(o3)DU..." for i=1:length(params.l)
+      # define parameters
+      # Calculate parameterised values
+      χ = collect(0:π/360:π/2)
+      jpar = jMCM(χ, o3, params.l[i], params.m[i], params.n[i])./10^jvals[iO3].order[i]
+      # Load TUV data and parameterisation for plotting
+      jplt = pyp.load_PlotData(DataFrame(χ=jvals[iO3].deg, j=jvals[iO3].jval[i]./
+             10^jvals[iO3].order[i]), label = "TUV data @$(o3)DU", pt = "s", lc = "black",
+             lt = "None")
+      pplt = pyp.load_PlotData(DataFrame(χ=collect(0:0.5:90), j=jpar), lc = "red",
+             lw = 2, label="MCM Parameterisaton")
+      # Plot TUV data
+
+      fig, ax = pyp.plot_data(jplt, pplt, ti = ptitle[i],
+      xlabel = "solar zenith angle χ",
+      ylabel = "j / 10\$^{$(Int(jvals[iO3].order[i]))}\\,\$s\$^{-1}\$",
+      xlims=(0,90), ylims=(0,nothing), maj_xticks=15, min_xticks=5, ti_offset=-2,
+      legpos="lower left")
+      # Plot time stamp
+      ax[:annotate]("created $(Dates.format(systime,"dd.mm.yyyy, HH:MM:SS"))",
+            xy=[0.02;0.22], xycoords="axes fraction", ha="left", va="bottom")
+
+      # save plot to temporary png
+      opfile[:savefig](fig)
+      close()
+    end
+
+    # close pdf
+    opfile[:close]()
+  end
+end #function plotj
+
+
+"""
+    plotl(ldat, params, order, O3col, ptitle, iofolder, systime, output)
+
+If `output` is not `false`, from the TUV calculated l parameters `ldat`, the fit
+parameters `params`, the `order` of magnitude for each reaction, the overlying
+ozone column array `O3col`, and the beautified reaction labels `ptitle`, generate
+plots of the fits versus TUV data for the ozone column dependent l parameter in a
+file `iofolder/lpar.pdf` stating the `systime` of creation.
+"""
 function plotl(ldat, params, order, O3col, ptitle, iofolder, systime, output)
 
   # Only print, if output is set to true
-  if output == false  return  end
+  if typeof(output) == Bool  return  end
 
   # Initialise array of plots and define x data
   opfile = pdf[:PdfPages]("$iofolder/lpar.pdf")
@@ -86,15 +143,15 @@ function plotl(ldat, params, order, O3col, ptitle, iofolder, systime, output)
 
   # compile pngs in single pdf and delete pngs
   opfile[:close]()
-end
+end #function plotl
 
 
 """
-    wrt_params(jvals, iofolder, systime)
+    wrt_params(jvals, params, stats, iofolder, systime)
 
-Write the parameters, statistical data, and reaction labels stored in the
-dictionary `jvals` to the file `parameters.dat` in the `iofolder` and state
-the `systime` of creation.
+Write the parameters in `params`, additional statistical data in `stats`, and
+reaction labels stored in `jvals` to the file `parameters.dat` in the `iofolder`
+and state the `systime` of creation.
 """
 function wrt_params(jvals, params, stats, iofolder, systime)
 
@@ -124,6 +181,13 @@ function wrt_params(jvals, params, stats, iofolder, systime)
 end # function wrt_params
 
 
+"""
+    wrt_params(jvals, params, iofolder, systime, output)
+
+Write the parameters in `params` and reaction labels stored in `jvals` to the file
+`parameters.dat` in the `iofolder`, and state the `systime` of creation, if `output`
+is not `false`.
+"""
 function wrt_newparams(jvals, params, iofolder, systime, output)
 
   # Only print, if output is set to true

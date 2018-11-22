@@ -38,7 +38,7 @@ function fit_jold(jvals)
   rmse  = [10^jvals.order[i]*rmse[i] for i = 1:length(rmse)]
 
   return PhotData(l, m, n, sigma, conv), StatData(rmse, R2)
-end #function fit_j
+end #function fit_jold
 
 
 """
@@ -59,7 +59,7 @@ function getMCMparams(jvals, O3col)
 
   return l, params350
   # Loop over initial guesses, otherwise drop low o3col value
-end
+end #function getMCMparams
 
 
 """
@@ -111,7 +111,7 @@ function fitl(ldata, order, o3col, params350, rxn)
   ldata .*= [10^o for o in order]
 
   return PhotData(lpar, params350.m, params350.n, sigmas, converged)
-end
+end #function fitl
 
 
 """
@@ -146,7 +146,7 @@ function convergel(o3col::Vector{Float64}, lpar::Vector{Float64},
   end
 
   return fit, fail
-end
+end #function convergel
 
 
 # Define fitting function
