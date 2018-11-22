@@ -15,9 +15,9 @@ version = "0.8.10"
 
 [[BinaryProvider]]
 deps = ["Libdl", "Pkg", "SHA", "Test"]
-git-tree-sha1 = "9930c1a6cd49d9fcd7218df6be417e6ae4f1468a"
+git-tree-sha1 = "055eb2690182ebc31087859c3dd8598371d3ef9e"
 uuid = "b99e7846-7c00-51b0-8f62-c81ae34c0232"
-version = "0.5.2"
+version = "0.5.3"
 
 [[Calculus]]
 deps = ["Compat"]
@@ -155,9 +155,9 @@ version = "0.1.1"
 
 [[JSON]]
 deps = ["Dates", "Distributed", "Mmap", "Sockets", "Test", "Unicode"]
-git-tree-sha1 = "fec8e4d433072731466d37ed0061b3ba7f70eeb9"
+git-tree-sha1 = "1f7a25b53ec67f5e9422f1f551ee216503f4a0fa"
 uuid = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
-version = "0.19.0"
+version = "0.20.0"
 
 [[Juno]]
 deps = ["Base64", "Logging", "Media", "Profile", "Test"]
@@ -429,11 +429,11 @@ version = "0.5.3"
 
 [[filehandling]]
 deps = ["DataFrames", "Juno"]
-git-tree-sha1 = "967a591ec9d6fdf02321d4a022616b9c0df98abb"
+git-tree-sha1 = "2e31d52827800f71d72a922674ef311fd1ca05e5"
 repo-rev = "master"
 repo-url = "https://github.com/pb866/filehandling.git"
 uuid = "4b8ed5e0-8069-11e8-094b-3f5425e6acdd"
-version = "0.2.2"
+version = "0.2.3"
 
 [[pyp]]
 deps = ["DataFrames", "Dates", "LaTeXStrings", "LinearAlgebra", "OhMyREPL", "Parameters", "PyPlot", "filehandling"]

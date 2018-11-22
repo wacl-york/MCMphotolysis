@@ -19,9 +19,9 @@ function plot_jold(jvals::filehandling.TUVdata, params::PhotData, systime::DateT
     # define parameters
     # Calculate parameterised values
     χ = collect(0:π/360:π/2)
-    jpar = params.l[i]./10^jvals.order[i].⋅cos.(χ).^params.m[i].⋅exp.(-params.n[i].⋅sec.(χ))
+    jpar = params.l[i]./10.0^jvals.order[i].⋅cos.(χ).^params.m[i].⋅exp.(-params.n[i].⋅sec.(χ))
     # Load TUV data and parameterisation for plotting
-    jplt = pyp.load_PlotData(DataFrame(χ=jvals.deg, j=jvals.jval[i]./10^jvals.order[i]),
+    jplt = pyp.load_PlotData(DataFrame(χ=jvals.deg, j=jvals.jval[i]./10.0^jvals.order[i]),
                             label = "TUV data", pt = "s", lc = "black", lt = "None")
     pplt = pyp.load_PlotData(DataFrame(χ=collect(0:0.5:90), j=jpar), lc = "red", lw = 2,
                             label="MCM Parameterisaton")
@@ -29,7 +29,7 @@ function plot_jold(jvals::filehandling.TUVdata, params::PhotData, systime::DateT
 
     fig, ax = pyp.plot_data(jplt, pplt, ti = ptitle[i],
     xlabel = "solar zenith angle χ",
-    ylabel = "j / 10\$^{$(Int(jvals.order[i]))}\$ s\$^{-1}\$",
+    ylabel = "j / 10\$^{$(jvals.order[i])}\$ s\$^{-1}\$",
     xlims=(0,90), ylims=(0,nothing), maj_xticks=15, min_xticks=5, ti_offset=-2,
     legpos="lower left")
     # Plot time stamp
@@ -69,10 +69,10 @@ function plotj(jvals, params, ptitle, O3col, output, iofolder, systime)
       # define parameters
       # Calculate parameterised values
       χ = collect(0:π/360:π/2)
-      jpar = jMCM(χ, o3, params.l[i], params.m[i], params.n[i])./10^jvals[iO3].order[i]
+      jpar = jMCM(χ, o3, params.l[i], params.m[i], params.n[i])./10.0^jvals[iO3].order[i]
       # Load TUV data and parameterisation for plotting
       jplt = pyp.load_PlotData(DataFrame(χ=jvals[iO3].deg, j=jvals[iO3].jval[i]./
-             10^jvals[iO3].order[i]), label = "TUV data @$(o3)DU", pt = "s", lc = "black",
+             10.0^jvals[iO3].order[i]), label = "TUV data @$(o3)DU", pt = "s", lc = "black",
              lt = "None")
       pplt = pyp.load_PlotData(DataFrame(χ=collect(0:0.5:90), j=jpar), lc = "red",
              lw = 2, label="MCM Parameterisaton")
@@ -80,7 +80,7 @@ function plotj(jvals, params, ptitle, O3col, output, iofolder, systime)
 
       fig, ax = pyp.plot_data(jplt, pplt, ti = ptitle[i],
       xlabel = "solar zenith angle χ",
-      ylabel = "j / 10\$^{$(Int(jvals[iO3].order[i]))}\\,\$s\$^{-1}\$",
+      ylabel = "j / 10\$^{$(jvals[iO3].order[i])}\\,\$s\$^{-1}\$",
       xlims=(0,90), ylims=(0,nothing), maj_xticks=15, min_xticks=5, ti_offset=-2,
       legpos="lower left")
       # Plot time stamp
@@ -119,9 +119,9 @@ function plotl(ldat, params, order, O3col, ptitle, iofolder, systime, output)
     # define parameters
     # Calculate parameterised values
     o3 = collect(O3col[1]:O3col[end])
-    lpar = lnew(o3, params.l[i])/10^order[i] #lnew is defined in fitTUV.jl
+    lpar = lnew(o3, params.l[i])/10.0^order[i] #lnew is defined in fitTUV.jl
     # Load TUV data and parameterisation for plotting
-    ldata  = pyp.load_PlotData(DataFrame(o3=O3col, l=ldat[i,:]./10^order[i]),
+    ldata  = pyp.load_PlotData(DataFrame(o3=O3col, l=ldat[i,:]./10.0^order[i]),
                  label = "l data", pt = "s", lc = "black", lt = "None")
     lparam = pyp.load_PlotData(DataFrame(o3=o3, l=lpar), lc = "red", lw = 2,
                  label="fit")
@@ -129,7 +129,7 @@ function plotl(ldat, params, order, O3col, ptitle, iofolder, systime, output)
 
     fig, ax = pyp.plot_data(ldata, lparam, ti = ptitle[i],
     xlabel = "ozone column / DU",
-    ylabel = "l / 10\$^{$(Int(order[i]))}\\,\$s\$^{-1}\$",
+    ylabel = "l / 10\$^{$(order[i])}\\,\$s\$^{-1}\$",
     xlims=(O3col[1],O3col[end]),ti_offset=-2,
     legpos="upper right")
     # Plot time stamp
@@ -173,7 +173,7 @@ function wrt_params(jvals, params, stats, iofolder, systime)
     for i = 1:length(jvals.rxn)
       # Print parameters, statistical data, and reaction label to output file
       @printf(f,"(%6.3f±%.3f)e%d    %.3f±%.3f    %.3f±%.3f    %.3e    %.4f    %s\n",
-      params.l[i]/10^jvals.order[i], params.sigma[i][1]/10^jvals.order[i], Int(jvals.order[i]),
+      params.l[i]/10.0^jvals.order[i], params.sigma[i][1]/10.0^jvals.order[i], jvals.order[i],
       params.m[i], params.sigma[i][2], params.n[i], params.sigma[i][3],
       stats.RMSE[i], stats.R2[i], jvals.rxn[i])
     end
@@ -212,10 +212,10 @@ function wrt_newparams(jvals, params, iofolder, systime, output)
     for i = 1:length(jvals[1].rxn)
       # Print parameters, errors, and reaction label to output file
       @printf(f,"(%6.3f±%.3f)e%d    (%6.3f±%.3f)e%d   %7.2f±%5.2f    (%6.3f±%.3f)e%d   %7.2f±%5.2f    %.3f±%.3f    %.3f±%.3f    %s\n",
-      params.l[i][1]/10^jvals[1].order[i], params.sigma[i][1]/10^jvals[1].order[i], Int(jvals[1].order[i]),
-      params.l[i][2]/10^jvals[1].order[i], params.sigma[i][2]/10^jvals[1].order[i], Int(jvals[1].order[i]),
+      params.l[i][1]/10.0^jvals[1].order[i], params.sigma[i][1]/10.0^jvals[1].order[i], jvals[1].order[i],
+      params.l[i][2]/10.0^jvals[1].order[i], params.sigma[i][2]/10.0^jvals[1].order[i], jvals[1].order[i],
       params.l[i][3], params.sigma[i][3],
-      params.l[i][4]/10^jvals[1].order[i], params.sigma[i][4]/10^jvals[1].order[i], Int(jvals[1].order[i]),
+      params.l[i][4]/10.0^jvals[1].order[i], params.sigma[i][4]/10.0^jvals[1].order[i], jvals[1].order[i],
       params.l[i][5], params.sigma[i][5], params.m[i], params.sigma[i][6], params.n[i], params.sigma[i][7],
       jvals[1].rxn[i])
     end

@@ -15,11 +15,11 @@ function fit_jold(jvals)
   for i = 1:length(jvals.jval) #1:length(jvals)
 
     # Define fit function with initial guesses
-    p0 = [1.35/10^jvals.order[i].*jvals.jval[i][1],0.8,0.3]
+    p0 = [1.35/10.0^jvals.order[i].*jvals.jval[i][1],0.8,0.3]
     # Fit at order 0 to increase accuracy
 
     # Derive fit
-    push!(fit, curve_fit(jold, jvals.rad, jvals.jval[i] ./ 10^jvals.order[i], p0))
+    push!(fit, curve_fit(jold, jvals.rad, jvals.jval[i] ./ 10.0^jvals.order[i], p0))
     # Derive sigma with 95% confidence
     push!(sigma, standard_error(fit[i]))
     # Calculate statistical data for RMSE and R^2
@@ -31,11 +31,11 @@ function fit_jold(jvals)
     push!(R2, 1. - (ss_err/ss_tot))
   end
   conv = [f.converged for f in fit]
-  l = [fit[i].param[1].*10^jvals.order[i] for i = 1:length(fit)]
+  l = [fit[i].param[1].*10.0^jvals.order[i] for i = 1:length(fit)]
   m = [fit[i].param[2] for i = 1:length(fit)]
   n = [fit[i].param[3] for i = 1:length(fit)]
-  sigma = [[10^jvals.order[i], 1., 1.].*sigma[i] for i = 1:length(sigma)]
-  rmse  = [10^jvals.order[i]*rmse[i] for i = 1:length(rmse)]
+  sigma = [[10.0^jvals.order[i], 1., 1.].*sigma[i] for i = 1:length(sigma)]
+  rmse  = [10.0^jvals.order[i]*rmse[i] for i = 1:length(rmse)]
 
   return PhotData(l, m, n, sigma, conv), StatData(rmse, R2)
 end #function fit_jold
@@ -73,7 +73,7 @@ function fitl(ldata, order, o3col, params350, rxn)
   # Initialise
   lpar = []; sigmas = []; converged = []
   o3 = convert.(Float64, o3col)
-  ldata ./= [10^o for o in order]
+  ldata ./= [10.0^o for o in order]
   # Loop over reactions
   for i = 1:length(ldata[:,1])
     p0 = [0.,ldata[i,1],100.,ldata[i,1],100.]
@@ -101,14 +101,14 @@ function fitl(ldata, order, o3col, params350, rxn)
 
     # Save improved l parameters and standard deviations
     l  = deepcopy(fit.param)
-    l[[1,2,4]] *= 10^order[i]
+    l[[1,2,4]] *= 10.0^order[i]
     push!(lpar, l)
     errl = standard_error(fit)
-    sigmal = abs.((l./errl.*10^order[i] .+ params350.sigma[i][1]/params350.l[i]).*l)
+    sigmal = abs.((l./errl.*10.0^order[i] .+ params350.sigma[i][1]/params350.l[i]).*l)
     push!(sigmas, vcat(sigmal, params350.sigma[i][2:3]))
     push!(converged, !fail)
   end
-  ldata .*= [10^o for o in order]
+  ldata .*= [10.0^o for o in order]
 
   return PhotData(lpar, params350.m, params350.n, sigmas, converged)
 end #function fitl
