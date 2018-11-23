@@ -3,6 +3,7 @@ MCMphotolysis
 
 A Julia package to retrieve updated MCM photolysis parameterisations including
 a dependence on the overlying ozone column from TUV output files.
+The package is tested against MacOS 10.14.1.
 
 
 Installation
@@ -146,7 +147,7 @@ If you get an error message, follow the the instructions of the error message, e
 Pkg.build("CodecZlib")
 ```
 
-If PyPlot crashes, try running Julia with the system python rather than 
+If PyPlot crashes or fails to install, try running Julia with the system python rather than 
 the miniconda python version by rebuilding python with:
 
 ```julia
