@@ -147,11 +147,7 @@ If you get an error message, follow the the instructions of the error message, e
 Pkg.build("CodecZlib")
 ```
 
-<<<<<<< HEAD
-If PyPlot crashes or fails to install, try running Julia with the system python rather than 
-=======
-If PyPlot crashes, try running Julia with the system python rather than
->>>>>>> rel/0.2.1
+If PyPlot crashes or fails to install, try running Julia with the system python rather than
 the miniconda python version by rebuilding python with:
 
 ```julia
