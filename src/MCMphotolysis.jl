@@ -63,7 +63,8 @@ end
 # export public functions
 export j_oldpars,
        j_parameters,
-       PhotData
+       PhotData,
+       StatData
 
 
 function __init__()
