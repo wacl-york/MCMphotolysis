@@ -104,8 +104,12 @@ function fitl(ldata, order, o3col, params350, rxn)
     l  = deepcopy(fit.param)
     l[[1,2,4]] *= 10.0^order[i]
     push!(lpar, l)
-    errl = standard_error(fit)
-    sigmal = abs.((l./errl.*10.0^order[i] .+ params350.sigma[i][1]/params350.l[i]).*l)
+    if fit.converged
+      errl = standard_error(fit)
+      sigmal = abs.((l./errl.*10.0^order[i] .+ params350.sigma[i][1]/params350.l[i]).*l)
+    else
+      sigmal = [Inf, Inf, Inf, Inf, Inf]
+    end
     push!(sigmas, vcat(sigmal, params350.sigma[i][2:3]))
     push!(converged, !fail)
   end
@@ -133,10 +137,10 @@ function convergel(o3col::Vector{Float64}, lpar::Vector{Float64},
     if test == "p0"
       fit = curve_fit(lnew, o3col, lpar, fit.param)
     elseif test == "low"
-      fit = curve_fit(lnew, o3col[1+counter:end], lpar[1+counter:end,i], fit.param)
+      fit = curve_fit(lnew, o3col[1+counter:end], lpar[1+counter:end], fit.param)
     elseif test == "high"
       fit = curve_fit(lnew, o3col[counter:end-counter],
-        lpar[counter:end-counter,i], fit.param)
+        lpar[counter:end-counter], fit.param)
     end
     if fit.converged
       println(error_msg[1],counter,error_msg[2])
