@@ -8,7 +8,7 @@ a dependence on the overlying ozone column from TUV output files.
 Installation
 ------------
 
-Install the Package by adding it to your environment going to the package 
+Install the Package by adding it to your environment going to the package
 manager typing `]` in the julia prompt and in the package manager the following commands:
 
 ```julia
@@ -40,15 +40,15 @@ The package has two functions:
   l<sub>c0</sub>,l<sub>c1</sub>,m,n MCM photolysis parameterisations with a
   dependence on the overlying ozone column.
 
-Both functions rely on TUV 5.2 (or version with same format) output files, 
-with j for every reaction at the chosen height level. For the updated 
+Both functions rely on TUV 5.2 (or version with same format) output files,
+with j for every reaction at the chosen height level. For the updated
 parameterisations, you need TUV files for every ozone column in the chosen
 range (derived for 50 to 600DU every 50DU in the MCM). Files need to be
 saved in the format `<scen>.<O3col>.txt`, where `<scen>` is a scenario name
 that can be chosen freely and `<O3col` is the ozone column in DU. As TUV
 allows only 6 characters for file names, `<scen>` must not be longer than
 2 characters.
-  
+
 ### The original MCM photolysis parameterisation
 
 Function `j_oldpars` derives parameters for every reaction with non-zero
@@ -98,7 +98,7 @@ R² are determined and returned as `StatData`.
 
 ### Updated MCM photolysis parameterisation with ozone column dependence
 
-Function `j_parameters` returns a refined parameterisation, which includes a dependence on the overlying ozone column. In the original parameterisation, 
+Function `j_parameters` returns a refined parameterisation, which includes a dependence on the overlying ozone column. In the original parameterisation,
 `l` has been redefined to include a second order exponential dependence on the
 ozone column. At 350DU, both parameterisations are identical.
 
@@ -112,7 +112,7 @@ jvals, params = j_parameters("M4")
 ```
 
 The function works as above and by default creates a folder `params_<scen>`,
-where the ozone column dependence of `l` is plotted in `lpar.pdf` and 
+where the ozone column dependence of `l` is plotted in `lpar.pdf` and
 _j_ value fits and TUV data are compared in `jvalues.pdf`. A formatted files
 `parameters.dat` lists all parameters and standard errors. Additionally,
 `parameters.csv` lists the data in a csv file.
@@ -146,7 +146,7 @@ If you get an error message, follow the the instructions of the error message, e
 Pkg.build("CodecZlib")
 ```
 
-If PyPlot crashes, try running Julia with the system python rather than 
+If PyPlot crashes, try running Julia with the system python rather than
 the miniconda python version by rebuilding python with:
 
 ```julia
@@ -161,6 +161,12 @@ and copying the output.
 
 Version history
 ===============
+
+Version 0.2.1
+-------------
+- Improved error handling: assign `Inf` to sigmal, if conversion fails to avoid
+  errors from LsqFit and the abortion of the script
+- Fix #4
 
 Version 0.2.0
 -------------
