@@ -24,7 +24,7 @@ pkg> precompile
 
 `MCMphotolysis` relies on two unregistered packages, which have to be installed
 beforehand. If you haven't installed PyPlot previously, you should build it
-before your first run.
+before your first run or set plot output to false.
 
 
 Usage
@@ -45,97 +45,75 @@ Both functions rely on TUV 5.2 (or version with same format) output files,
 with j for every reaction at the chosen height level. For the updated
 parameterisations, you need TUV files for every ozone column in the chosen
 range (derived for 50 to 600DU every 50DU in the MCM). Files need to be
-saved in the format `<scen>.<O3col>.txt`, where `<scen>` is a scenario name
-that can be chosen freely and `<O3col` is the ozone column in DU. As TUV
+saved in the format `<scen>.<DU>.txt`, where `<scen>` is a scenario name
+that can be chosen freely and `<DU` is the ozone column in Dobson units. As TUV
 allows only 6 characters for file names, `<scen>` must not be longer than
 2 characters.
 
-### The original MCM photolysis parameterisation
+### Deriving MCM parameterisations
 
 Function `j_oldpars` derives parameters for every reaction with non-zero
 _j_ values in the TUV output file for the original MCM parameterisation:
 
     j(χ) = l·cosᵐ(χ)·exp(-n·sec(χ))
 
+In function `j_parameters`, l as been re-defined as a function of ozone column:
 
-Run:
-
-```julia
-jvals, params, stats = j_oldpars("<scen>", output = true)
-```
-
-`<scen>` is the file name without `.txt`. The function creates a folder
-`params_<scen>` it which it stores a text file with parameters and statistical
-data for each reaction and a pdf where fits are compared to the TUV data.
-
-By default `output` is set to true and does not have to be specified in
-the above command. If set to `false`, the output folder is not created
-and the function only returns the data below. Sigma is the standard error
-determined with the `LsqFit` package (https://github.com/JuliaNLSolvers/LsqFit.jl.git).
-Additionally, the root-mean-square error RMSE and the correlation coefficient
-R² are determined and returned as `StatData`.
-
-`jvals` of type `TUVdata` with fields:
-- `jval::DataFrame`
-- `order::Vector{Int64}`
-- `deg::Vector{Float64}`
-- `rad::Vector{Float64}`
-- `rxn::Vector{String}`
-- `mcm::Vector{Int64}`
-- `tuv::Vector{Int64}`
-- `O3col::Number`
-
-`params` of type `PhotData` with fields:
-- `l::Union{Vector{Float64},Vector{Any}}`
-- `m::Vector{Float64}`
-- `n::Vector{Float64}`
-- `sigma::Vector{Vector{Float64}}`
-- `converged::Vector{Bool}`
-
-`stats` of type `StatData` with fields:
-- `RMSE::Vector{Float64}`
-- `R2::Vector{Float64}`
-
-
-### Updated MCM photolysis parameterisation with ozone column dependence
-
-Function `j_parameters` returns a refined parameterisation, which includes a dependence on the overlying ozone column. In the original parameterisation,
-`l` has been redefined to include a second order exponential dependence on the
-ozone column. At 350DU, both parameterisations are identical.
-
-    j(χ) = (l_a0 + l_b0·exp(-l_b1/[O3col])+ l_c0·exp(-l_c1/[O3col]))·cosᵐ(χ)·exp(-n·sec(χ))
+    l([DU]) = l_a0 + l_b0·exp(-l_b1/[DU])+ l_c0·exp(-l_c1/[DU])
 
 
 Run:
 
 ```julia
-jvals, params = j_parameters("M4")
+jvals, params = j_oldpars("<scen>", **kwargs)
+jvals, params = j_parameters("<scen>", **kwargs)
 ```
 
-The function works as above and by default creates a folder `params_<scen>`,
-where the ozone column dependence of `l` is plotted in `lpar.pdf` and
-_j_ value fits and TUV data are compared in `jvalues.pdf`. A formatted files
-`parameters.dat` lists all parameters and standard errors. Additionally,
-`parameters.csv` lists the data in a csv file.
+`<scen>` is the file name without `.txt` and without the ozone column in j_parameters.
+The function creates a folder `params_<scen>` in which it stores a text files
+(formatted and semicolon-separated) with parameters and 95% sigma values for
+every reaction and a pdf where fits are compared to the TUV data.
 
-`j_parameters` does not calculate the additional statistical parameters RMSE
-and R<sup>2</sup>. The parameterisation is derived by deriving the original MCM
-parameterisation at 350DU, fixing `m` and `n` and recalculating `l` for every
-ozone column. If values at 350DU do not exist, the next smallest ozone column
-is chosen. In a next step the second order exponential decay is derived from
-the ozone dependent l values.
+By default all `output` is saved, but it can be (partially) switched off by the
+following options:
 
-Errors for the `l` parameters are composed of the standard errors for the
-original `l` fit and the ozone column fit:
+`j_oldpars`:
+- `true` or `"plot"`: all output is saved
+- `"data"`: only text files are saved, no pdf with plots
+- `false` or `"None"`: no output, only function return values
+
+`j_parameters`:
+- `Int64`/`Vector{Int64}`: text files and pdf with plots for the ozone columns
+  specified in output either as integer or vector of several integers
+- `true`: only text files are saved, no pdf with plots
+- `false`: no output, only function return values
+
+In addition to the output, the function returns to data types `TUVdata` and `PhotData`
+with the following fields:
+
+`TUVdata`:
+- `jval::DataFrame` with j values of all reactions
+- `order::Vector{Int64}` with order of magnitude for all j values for plot formatting
+- `deg::Vector{Float64}` with solar zenith angles in deg
+- `rad::Vector{Float64}` with solar zenith angles in rad
+- `rxn::Vector{String}` with vector of TUV reaction strings
+- `mcm::Vector{Int64}` with MCM photolysis reaction numbers
+- `tuv::Vector{Int64}` with TUV photolysis reaction numbers
+- `O3col::Number` with ozone column value in current scenario as specified by kwarg
+
+`PhotData`:
+- `l::Union{Vector{Float64},Vector{Any}}` with MCM l parameters for every reaction
+- `m::Vector{Float64}` with MCM m parameters for every reaction
+- `n::Vector{Float64}` with MCM n parameters for every reaction
+- `sigma::Vector{Vector{Float64}}` with 95% sigma values for every parameter in every reaction
+- `converged::Vector{Bool}` with flags for convergence
+
+Sigma is the standard error determined with the `LsqFit` package (https://github.com/JuliaNLSolvers/LsqFit.jl.git).
+
+Errors for the updated `l` parameters in `j_parameters` are composed of the
+standard errors for the original `l` fit and the ozone column fit:
 
     Δlₓ = (σ(l)/l + σ(lₓ)/lₓ)·lₓ
-
-The keyword argument `output` is slightly redefined. If set to `false`, no
-output folder is created and only `TUVdata` and `PhotData` is returned.
-If set to `true`, only text files are generated. To generate plots, specify
-an integer or vector of integers, for which _j_ value plots are desired.
-In that case, the ozone column dependence of the `l` parameter is plotted
-as well.
 
 
 Trouble shooting of common errors
@@ -162,6 +140,17 @@ and copying the output.
 
 Version history
 ===============
+
+Version 0.3.0
+-------------
+- Updated database files and new kwarg `MCMversion` for correct MCM reaction numbers
+- Remove `StatData`; `RMSE` and `R2` are not supported in v0.3.0
+- New options to only print output to text files in `j_oldpars`; additional
+  semicolon-separated output
+- Rename kwarg `O3col` to `DU`
+- On failure, don't exit Julia, only abort function and return nothing
+- Rename internal functions
+- Code clean-up and bug fixes
 
 Version 0.2.1
 -------------

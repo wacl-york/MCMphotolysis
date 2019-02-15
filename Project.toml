@@ -2,12 +2,11 @@ name = "MCMphotolysis"
 uuid = "37f95c2c-7f9b-11e8-13ad-816be0d1e117"
 authors = ["Peter Bräuer <pb866@york.ac.uk>"]
 julia = "≥0.7"
-version = "0.3.0-DEV"
+version = "0.3.0"
 
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
-Juno = "e5e0dc1b-0480-54bc-9374-aad01c23163d"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 LsqFit = "2fda8390-95c7-5789-9bda-21331edee243"
