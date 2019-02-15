@@ -1,18 +1,18 @@
 """
-    fit_jold(jvals, sza)
+    fit_jold(jvals)
 
-Derive MCM parameterisations for DataFrame `jvals` with `sza`-dependent _j_ values.
-    j / s^-1 = l·cos^m(sza)·exp(-n·sec(sza))]
+Derive MCM parameterisations from `TUVdata` `jvals` with χ-dependent _j_ values.
+    j / s^-1 = l·cosᵐ(sza)·exp(-n·sec(sza))].
 
-The Vector of solar zenith angles `sza` must be in rad.
+Returns `PhotData` with l,m,n-parameters, their sigma values and a flag for convergence.
 """
 function fit_jold(jvals)
 
   # Initialise arrays for fitting data
-  fit = []; sigma = []; rmse = []; R2 = []
+  fit = []; sigma = []#; rmse = []; R2 = []
 
   # Loop over all j data
-  for i = 1:length(jvals.jval) #1:length(jvals)
+  for i = 1:size(jvals.jval, 2) #1:length(jvals)
 
     # Define fit function with initial guesses
     p0 = [1.35/10.0^jvals.order[i].*jvals.jval[i][1],0.8,0.3]
@@ -21,29 +21,29 @@ function fit_jold(jvals)
     # Derive fit
     push!(fit, curve_fit(jold, jvals.rad, jvals.jval[i] ./ 10.0^jvals.order[i], p0))
     # Derive sigma with 95% confidence
-    push!(sigma, standard_error(fit[i]))
+    push!(sigma, stderror(fit[i]))
     # Calculate statistical data for RMSE and R^2
-    ss_err = sum(fit[i].resid.^2)
-    ss_tot = sum((jvals.jval[i]./10.0^jvals.order[i].-
-             mean(jvals.jval[i]./10.0^jvals.order[i])).^2)
+    # ss_err = sum(fit[i].resid.^2)
+    # ss_tot = sum((jvals.jval[i]./10.0^jvals.order[i].-
+    #          mean(jvals.jval[i]./10.0^jvals.order[i])).^2)
     # RMSE
-    push!(rmse, √(ss_err/fit[i].dof))
+    # push!(rmse, √(ss_err/fit[i].dof))
     # R^2
-    push!(R2, 1. - (ss_err/ss_tot))
+    # push!(R2, 1. - (ss_err/ss_tot))
   end
   conv = [f.converged for f in fit]
   l = [fit[i].param[1].*10.0^jvals.order[i] for i = 1:length(fit)]
   m = [fit[i].param[2] for i = 1:length(fit)]
   n = [fit[i].param[3] for i = 1:length(fit)]
   sigma = [[10.0^jvals.order[i], 1., 1.].*sigma[i] for i = 1:length(sigma)]
-  rmse  = [10.0^jvals.order[i]*rmse[i] for i = 1:length(rmse)]
+  # rmse  = [10.0^jvals.order[i]*rmse[i] for i = 1:length(rmse)]
 
-  return PhotData(l, m, n, sigma, conv), StatData(rmse, R2)
+  return PhotData(l, m, n, sigma, conv)#, StatData(rmse, R2)
 end #function fit_jold
 
 
 """
-    getMCMparams(jvals, o3col)
+    getMCMparams(jvals, O3col)
 
 From dictionary `jvals` with j value related data and vector `o3col`
 with ozone column values, return a Matrix with the old l parameters for every
@@ -52,7 +52,7 @@ parameterisations of every photolysis reaction in `jvals`.
 """
 function getMCMparams(jvals, O3col)
   iO3 = findlast(O3col .≤ 350)
-  params350, stats350 = fit_jold(jvals[iO3])
+  params350 = fit_jold(jvals[iO3])
   l = zeros(Float64, length(jvals[iO3].rxn), length(O3col))
   for o3 = 1:length(O3col), jmax = 1:length(jvals[iO3].rxn)
     l[jmax, o3] = jvals[o3].jval[jmax][1]/exp(-params350.n[jmax])
@@ -64,11 +64,14 @@ end #function getMCMparams
 
 
 """
-    fitl(l, o3col)
+    fitl(ldata, order, o3col, params350, rxn)
 
-From vector `l` with vectors of l parameters for every ozone column and every
-photolysis reaction  and vector `o3col` with the ozone column values, return
-a Matrix with the revised parameters for the ozone column dependent new l parameter.
+From vector `ldata` with vectors of l parameters for every ozone column and every
+photolysis reaction, their `order` of magnitude, the original m/n-parameters saved
+in `params350`, vector `o3col` with the ozone column values, and vector `rxn` with
+the reaction strings, return `PhotData` with the revised parameters for the ozone
+column dependent new l parameters, the original m,n-parameeters, sigma values for
+all parameters, and flags for convergence.
 """
 function fitl(ldata, order, o3col, params350, rxn)
   # Initialise
@@ -105,7 +108,7 @@ function fitl(ldata, order, o3col, params350, rxn)
     l[[1,2,4]] *= 10.0^order[i]
     push!(lpar, l)
     if fit.converged
-      errl = standard_error(fit)
+      errl = stderror(fit)
       sigmal = abs.((l./errl.*10.0^order[i] .+ params350.sigma[i][1]/params350.l[i]).*l)
     else
       sigmal = [Inf, Inf, Inf, Inf, Inf]
@@ -167,7 +170,7 @@ jold(χ,p) = p[1].*(cos.(χ)).^(p[2]).*exp.(-p[3].⋅sec.(χ))
 """
 jMCM(χ,O3col,lpar,m,n) = lnew(O3col,lpar).⋅
                         (cos.(χ)).^m.⋅exp.(-n.⋅sec.(χ))
-# Fit ozone column dependency of the l parameter
+
 """
     lnew(O3,p) / s^-1 = p[1] + p[2]·exp(-O3/p[3]) + p[4]·exp(-O3/p[5])
 """
