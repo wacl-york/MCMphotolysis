@@ -1,12 +1,14 @@
 """
-    plot_j(jvals::Dict{Symbol,Any},systime::DateTime,iofolder::String,ifile::String)
+    plot_jold(jvals::filehandling.TUVdata, params::PhotData, systime::DateTime, iofolder::String, output::Union{Bool,String})
 
-Plot j values saved in `jvals[:jvals]` and parameterisations derived from parameters
-in `jvals[:fit]` to file `ifile.pdf` in the `iofolder` together with the
-`systime` of creation.
+Plot j values saved in `jvals.jval` and parameterisations derived from parameters
+in `params` to file `jvalues.pdf` in the `iofolder` together with the
+`systime` of creation, if `output` is set to `true` or `"plot"`.
 """
 function plot_jold(jvals::filehandling.TUVdata, params::PhotData, systime::DateTime,
-  iofolder::String)
+  iofolder::String, output::Union{Bool,String})
+  # Only print, if output is set to true
+  if !(output == true || output == "plot")  return  end
 
   # Format titles with Latex using header of jvals
   ptitle = set_titles(jvals)
@@ -47,8 +49,11 @@ end #function plot_j
 
 
 """
+    plotj(jvals, params, ptitle, O3col, output, iofolder, systime)
 
-
+Plot TUV data in `jvals.jval` and parameters from `params` together with the plot
+title `ptitle`, the `systime` of creation, and the `O3col` (in DU) to the file
+`jvalues.<O3col>.pdf` in the `iofolder`.
 """
 function plotj(jvals, params, ptitle, O3col, output, iofolder, systime)
 
@@ -147,13 +152,16 @@ end #function plotl
 
 
 """
-    wrt_params(jvals, params, stats, iofolder, systime)
+    write_oldparams(jvals, params, iofolder, systime, output)
 
-Write the parameters in `params`, additional statistical data in `stats`, and
-reaction labels stored in `jvals` to the file `parameters.dat` in the `iofolder`
-and state the `systime` of creation.
+Write the parameters in `params` and reaction labels stored in `jvals` to the
+formatted file `parameters.dat` and semicolon-separated file `parameters.csv`
+in the `iofolder` and state the `systime` of creation, if `output` is not `false`
+or `"None"`.
 """
-function wrt_params(jvals, params, stats, iofolder, systime)
+function write_oldparams(jvals, params, iofolder, systime, output) #, stats
+  # Only print, if output is set to true
+  if output == false || output == "None"  return  end
 
   # Open output file
   open("$iofolder/parameters.dat","w") do f
@@ -166,29 +174,44 @@ function wrt_params(jvals, params, stats, iofolder, systime)
     println(f, "Fits and standard errors are derived with Julia package LsqFit v0.6.0")
     println(f, "(https://github.com/JuliaNLSolvers/LsqFit.jl.git).")
     println(f, "created $(Dates.format(systime,"dd.mm.yyyy, HH:MM:SS"))")
-    println(f,"\n                 P a r a m e t e r s               S t a t i s t i c s")
-    println(f,"     l / s-1              m              n         RMSE / s-1    R^2      Reaction")
+    println(f,"\n                 P a r a m e t e r s")
+    println(f,"     l / s-1              m              n         Reaction")
 
     # Loop over reactions
     for i = 1:length(jvals.rxn)
       # Print parameters, statistical data, and reaction label to output file
-      @printf(f,"(%6.3f±%.3f)e%d    %.3f±%.3f    %.3f±%.3f    %.3e    %.4f    J(%d): %s\n",
+      @printf(f,"(%6.3f±%.3f)e%d    %.3f±%.3f    %.3f±%.3f    J(%d): %s\n",
       params.l[i]/10.0^jvals.order[i], params.sigma[i][1]/10.0^jvals.order[i], jvals.order[i],
       params.m[i], params.sigma[i][2], params.n[i], params.sigma[i][3],
-      stats.RMSE[i], stats.R2[i], jvals.mcm[i], jvals.rxn[i])
+      jvals.mcm[i], jvals.rxn[i])
+    end
+  end
+
+  # Open csv output file
+  open("$iofolder/parameters.csv","w") do f
+    # Print header
+    println(f, "l;m;n;sigma l;sigma m;sigma n;MCM rxn number;TUV rxn number;rxn label")
+
+    # Loop over reactions
+    for i = 1:length(jvals.rxn)
+      # Print parameters, errors, and reaction label to output file
+      @printf(f,"%.3e;%.3f;%.3f;%.3e;%.3f;%.3f;J(%d);%d;%s\n",
+      params.l[i], params.m[i], params.n[i], params.sigma[i][1], params.sigma[i][2],
+      params.sigma[i][3], jvals.mcm[i], jvals.tuv[i], jvals.rxn[i])
     end
   end
 end # function wrt_params
 
 
 """
-    wrt_params(jvals, params, iofolder, systime, output)
+    write_params(jvals, params, iofolder, systime, output)
 
-Write the parameters in `params` and reaction labels stored in `jvals` to the file
-`parameters.dat` in the `iofolder`, and state the `systime` of creation, if `output`
-is not `false`.
+Write the parameters in `params` and reaction labels stored in `jvals` to the
+formatted file `parameters.dat` or semicolon-separated file `parameters.csv`
+in the `iofolder`, and state the `systime` of creation, if `output` is not
+`false` or `"None"`.
 """
-function wrt_newparams(jvals, params, iofolder, systime, output)
+function write_params(jvals, params, iofolder, systime, output)
 
   # Only print, if output is set to true
   if output == false  return  end
@@ -224,13 +247,13 @@ function wrt_newparams(jvals, params, iofolder, systime, output)
   # Open csv output file
   open("$iofolder/parameters.csv","w") do f
     # Print header
-    println(f, "l_a0,l_b0,l_b1,l_c0,l_c1,m,n,sigma l_a0,sigma l_b0,sigma l_b1,",
-      "sigma l_c0,sigma l_c1,sigma m,sigma n,MCM rxn number,TUV rxn number,rxn label")
+    println(f, "l_a0;l_b0;l_b1;l_c0;l_c1;m;n;sigma l_a0;sigma l_b0;sigma l_b1;",
+      "sigma l_c0;sigma l_c1;sigma m;sigma n;MCM rxn number;TUV rxn number;rxn label")
 
     # Loop over reactions
     for i = 1:length(jvals[1].rxn)
       # Print parameters, errors, and reaction label to output file
-      @printf(f,"%.3e,%.3e,%.2f,%.3e,%.2f,%.3f,%.3f,%.3e,%.3e,%.2f,%.3e,%.2f,%.3f,%.3f,J(%d),%d,%s\n",
+      @printf(f,"%.3e;%.3e;%.2f;%.3e;%.2f;%.3f;%.3f;%.3e;%.3e;%.2f;%.3e;%.2f;%.3f;%.3f;J(%d);%d;%s\n",
       params.l[i][1], params.l[i][2], params.l[i][3], params.l[i][4], params.l[i][5],
       params.m[i], params.n[i], params.sigma[i][1], params.sigma[i][2],
       params.sigma[i][3], params.sigma[i][4], params.sigma[i][5],

@@ -6,7 +6,6 @@ dir = Base.source_dir()
 # Load Julia packages
 using Statistics
 using LinearAlgebra
-using Juno: input #get terminal input inside or outside Atom
 using Dates
 using ProgressMeter
 using LsqFit
@@ -47,6 +46,7 @@ struct PhotData
 end
 
 
+#=
 """
     struct StatData
 
@@ -58,6 +58,7 @@ struct StatData
   RMSE::Vector{Float64}
   R2::Vector{Float64}
 end
+=#
 
 
 # export public functions
@@ -79,65 +80,84 @@ include(joinpath(dir,"output.jl"))
 
 
 """
-    j_oldpars(scen::String; output::Bool=true, O3col::Number=350)
+    j_oldpars(scen::String; output::Union{Bool,String}=true, DU::Number=350, MCMversion::Int64=3)
 
-Read reactions from a TUV output file named `scen`.txt, derive MCM l,m,n-parameterisations
-for photolysis and return a data type `PhotData` with the following fields:
+Read reactions from a `TUVdata` for a TUV output file named `scen`.txt, and store the `TUVdata`
+in the following fields:
 
-- `jval`: DataFrame with j values (devided by maximum order of magnitude, i.e. without the `e-...`)
+- `jval`: DataFrame with j values
 - `order`: Vector with order of magnitudes
 - `deg`/`:rad`: Vector with solar zenith angles in deg/rad
 - `rxn`: Vector of strings with reaction labels
-- `O3col`: Ozone column from kwarg
+- `mcm`/`tuv` MCM/TUV photolysis reaction numbers
+- `DU`: Ozone column from kwarg (only as info; default: `350`)
+
+
+Derive MCM l,m,n-parameterisations for photolysis and return a data type `PhotData`
+with the following fields:
+
 - `l`/`m`/`n`: Vector with MCM photolysis parameters
 - `sigma`: Vector of Vectors with σ-values for the 95% confidence interval for the `l`, `m`, and `n` parameters
-- `RMSE`: Vector of root mean square errors
-- `R2`: Vector of correlation cofficients R²
 - `converged`: Vector of booleans with `true` for a converged fit, otherwise `false`
 
-If output is set to `true` (_default_), _j_ values from TUV and the parameterisations
+If output is set to `true` or `"plot"` (_default_), _j_ values from TUV and the parameterisations
 for all reactions are plotted to a pdf and _j_ values and errors/statistical data
-are printed to a text file in a folder named `params_<scen>`.
+are printed to a formatted text file or semi-colon separated csv file in a folder named
+`params_<scen>`. The following options for output exist:
+
+- `true` or `"plot"`: Plot TUV data with parameterisations to pdf and data to a formatted
+  text file and semicolon-separated csv file
+- `"data"`: Only print data to text/csv files
+- `false` or `"None"`: Don't print output only return the data from the function
+
+The `MCMversion` is needed to assign the correct MCM reaction numbers.
 """
-function j_oldpars(scen::String; output::Bool=true, O3col::Number=350)
+function j_oldpars(scen::String; output::Union{Bool,String}=true, DU::Number=350, MCMversion::Int64=3)
   # Initialise system time and output path/file name
   systime = now()
 
   # Read dataframe with j values from TUV output file
   println("load data...")
   ifile, iofolder = setup_files(scen, output)
-  jvals = readTUV(ifile, O3col)
+  if ifile == nothing  return nothing, nothing, nothing  end
+  jvals = readTUV(ifile, DU = DU, MCMversion = MCMversion)
 
   # Derive parameterisations for j values
-  params, stats = fit_jold(jvals)
+  params = fit_jold(jvals) #, stats
 
   # Write output
-  if output
-    wrt_params(jvals,params,stats,iofolder,systime)
-    plot_jold(jvals,params,systime,iofolder)
-  end
-  return jvals, params, stats
+  write_oldparams(jvals,params,iofolder,systime,output) #,stats
+  plot_jold(jvals,params,systime,iofolder,output)
+
+  return jvals, params#, stats
 end #function j_oldpars
 
 """
-    j_parameters(scen::String; output::Union{Bool,Int64,Float64,Vector{Int64},Vector{Float64}}=350)
+    j_parameters(scen::String; output::Union{Bool,Int64,Float64,Vector{Int64},Vector{Float64}}=350, MCMversion::Int64=4)
 
-The functions searches for a TUV output file in the current directory from the scenario name of
-the TUV run `scen` (output file name without `.txt`) and create a folder `params_<scen>` with a
-file `parameters.dat` listing the fitting parameters for the MCM photolysis parameterisations and
-`<scen>.pdf` with a graphical display of the TUV calculated data and the MCM parameterisation.
+The functions searches for a TUV output files in the current directory from the
+scenario name of the TUV run `scen`. TUV files have to be of the format `<scen>.DU.txt`.
+
+The `MCMversion` is needed to assign the correct MCM photolysis reaction numbers.
+Output is printed under the following conditions, when `output` is set to:
+- `false`: No output, function returns data as `TUVdata` and `PhotData`
+- `true`: Output written to formatted text file `parameters.dat` and
+  semicolon-separated csv file `paramters.csv`
+- `Int64`/`Vector{Int64}`: Additionally to text files, parameterisations and TUV
+  data are compared in pdf plots for any ozone column specified in `output`
 """
 function j_parameters(scen::String;
-         output::Union{Bool,Int64,Vector{Int64}}=350)
+         output::Union{Bool,Int64,Vector{Int64}}=350, MCMversion::Int64=4)
   # Initialise system time and output path/file name
   systime = now()
 
   # Read dataframe with j values from TUV output file
   println("load data...")
   inpfile, iofolder, O3col = getO3files(scen, output)
+  if inpfile == nothing  return nothing, nothing  end
 
   # Read TUV data and get original l parameters and m, n parameters for 350DU
-  jvals = getTUVdata(inpfile, O3col)
+  jvals = getTUVdata(inpfile, O3col, MCMversion)
 
   # Collect and fit data
   ldata, params350 = getMCMparams(jvals, O3col)
@@ -145,7 +165,7 @@ function j_parameters(scen::String;
 
   # Write output
   ptitle = set_titles(jvals[1])
-  wrt_newparams(jvals, params, iofolder, systime, output)
+  write_params(jvals, params, iofolder, systime, output)
   plotl(ldata, params, jvals[1].order, O3col, ptitle, iofolder, systime, output)
   plotj(jvals, params, ptitle, O3col, output, iofolder, systime)
 

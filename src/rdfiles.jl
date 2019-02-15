@@ -11,24 +11,27 @@ function setup_files(scen, output)
   # Test script argument and ask for input file, if missing
   if isempty(scen)
     println("Enter name for TUV scenario")
-    scen = input("(Name of output file without \'.txt\'): ")
+    print("(Name of output file without \'.txt\'): ")
+    scen = readline()
   end
 
   # Create output folder
   iofolder = "./params_"*strip(scen)
-  if output  try mkdir(iofolder)
+  if output ≠ false && output ≠ "None"  try mkdir(iofolder)
   catch
     print("\033[95mFolder '$iofolder' already exists! Overwrite ")
-    confirm = input("(\033[4mY\033[0m\033[95mes/\033[4mN\033[0m\033[95mo)?\033[0m ")
+    print("(\033[4mY\033[0m\033[95mes/\033[4mN\033[0m\033[95mo)?\033[0m ")
+    confirm = readline()
     if !isempty(confirm) && lowercase(confirm[1]) == 'y'
       cd(iofolder); files = readdir(); [rm(file) for file in files ]; cd("..")
-    else println("Programme aborted. Exit code '98'."); exit(98)
+    else println("Stop function 'setup_files'."); return nothing, nothing
     end
   end  end
 
   # Define TUV file
   ifile = scen*".txt"
-  ifile = test_file(ifile)
+  ifile = filetest(ifile)
+  if ifile == ""  return nothing, nothing  end
 
   # return file and folder names
   return ifile, iofolder
@@ -49,7 +52,8 @@ function getO3files(scen, output)
   # Test script argument and ask for input file, if missing
   while !any(occursin.(scen,readdir()))
     println("Enter a valid name for a TUV scenario")
-    scen = input("(Name of output file without \'.txt\'): ")
+    print("(Name of output file without \'.txt\'): ")
+    scen = readline()
   end
 
   # Create output folder
@@ -57,10 +61,11 @@ function getO3files(scen, output)
   if output ≠ false  try mkdir(iofolder)
   catch
     print("\033[95mFolder '$iofolder' already exists! Overwrite ")
-    confirm = input("(\033[4mY\033[0m\033[95mes/\033[4mN\033[0m\033[95mo)?\033[0m ")
+    print("(\033[4mY\033[0m\033[95mes/\033[4mN\033[0m\033[95mo)?\033[0m ")
+    confirm = readline()
     if !isempty(confirm) && lowercase(confirm[1:1]) == "y"
       cd(iofolder); files = readdir(); for file in files  rm(file)  end; cd("..")
-    else println("Programme aborted. Exit code '98'."); exit(98)
+    else println("Stop function 'getO3files'."); return nothing, nothing, nothing
     end
   end  end
 
@@ -79,16 +84,16 @@ end #function get_fnames
 
 
 """
-    getTUVdata(inpfile, O3col)
+    getTUVdata(inpfile, O3col, MCMversion)
 
 From vector `inpfile` with file names of all ozone scenarios and vector `O3col`
 with all ozone column values, get a vector of `TUVdata` with j value related data.
 """
-function getTUVdata(inpfile, O3col)
+function getTUVdata(inpfile, O3col, MCMversion)
   # Read j values
   jvals = []
   for i = 1:length(inpfile)
-    j = readTUV(inpfile[i], O3col[i])
+    j = readTUV(inpfile[i], DU = O3col[i], MCMversion = MCMversion)
     push!(jvals, j)
   end
 
