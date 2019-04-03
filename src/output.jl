@@ -1,11 +1,11 @@
 """
-    plot_jold(jvals::filehandling.TUVdata, params::PhotData, systime::DateTime, iofolder::String, output::Union{Bool,String})
+    plot_jold(jvals::TUVdata, params::PhotData, systime::DateTime, iofolder::String, output::Union{Bool,String})
 
 Plot j values saved in `jvals.jval` and parameterisations derived from parameters
 in `params` to file `jvalues.pdf` in the `iofolder` together with the
 `systime` of creation, if `output` is set to `true` or `"plot"`.
 """
-function plot_jold(jvals::filehandling.TUVdata, params::PhotData, systime::DateTime,
+function plot_jold(jvals::TUVdata, params::PhotData, systime::DateTime,
   iofolder::String, output::Union{Bool,String})
   # Only print, if output is set to true
   if !(output == true || output == "plot")  return  end
@@ -14,10 +14,10 @@ function plot_jold(jvals::filehandling.TUVdata, params::PhotData, systime::DateT
   ptitle = set_titles(jvals)
 
   # Open pdf
-  opfile = pdf[:PdfPages]("$iofolder/jvalues.pdf")
+  opfile = pdf.PdfPages("$iofolder/jvalues.pdf")
 
   # Loop over all reactions
-  @showprogress 1 "plot data..." for i=1:length(params.l)
+  @showprogress 0.1 "plot data..." for i=1:length(params.l)
     # define parameters
     # Calculate parameterised values
     χ = collect(0:π/360:π/2)
@@ -35,16 +35,16 @@ function plot_jold(jvals::filehandling.TUVdata, params::PhotData, systime::DateT
     xlims=(0,90), ylims=(0,nothing), maj_xticks=15, min_xticks=5, ti_offset=-2,
     legpos="lower left")
     # Plot time stamp
-    ax[:annotate]("created $(Dates.format(systime,"dd.mm.yyyy, HH:MM:SS"))",
+    ax.annotate("created $(Dates.format(systime,"dd.mm.yyyy, HH:MM:SS"))",
           xy=[0.02;0.22], xycoords="axes fraction", ha="left", va="bottom")
 
     # save plot to temporary png
-    opfile[:savefig](fig)
-    close()
+    opfile.savefig(fig)
+    close(fig)
   end
 
   # close pdf
-  opfile[:close]()
+  opfile.close()
 end #function plot_j
 
 
@@ -67,10 +67,10 @@ function plotj(jvals, params, ptitle, O3col, output, iofolder, systime)
     # Find index for ozone column in O3col
     iO3 = findfirst(O3col .== o3)
     # Open pdf
-    opfile = pdf[:PdfPages]("$iofolder/jvalues.$(o3)DU.pdf")
+    opfile = pdf.PdfPages("$iofolder/jvalues.$(o3)DU.pdf")
 
     # Loop over all reactions
-    @showprogress 1 "plot j@$(o3)DU..." for i=1:length(params.l)
+    @showprogress 0.1 "plot j@$(o3)DU..." for i=1:length(params.l)
       # define parameters
       # Calculate parameterised values
       χ = collect(0:π/360:π/2)
@@ -89,16 +89,16 @@ function plotj(jvals, params, ptitle, O3col, output, iofolder, systime)
       xlims=(0,90), ylims=(0,nothing), maj_xticks=15, min_xticks=5, ti_offset=-2,
       legpos="lower left")
       # Plot time stamp
-      ax[:annotate]("created $(Dates.format(systime,"dd.mm.yyyy, HH:MM:SS"))",
+      ax.annotate("created $(Dates.format(systime,"dd.mm.yyyy, HH:MM:SS"))",
             xy=[0.02;0.22], xycoords="axes fraction", ha="left", va="bottom")
 
       # save plot to temporary png
-      opfile[:savefig](fig)
-      close()
+      opfile.savefig(fig)
+      close(fig)
     end
 
     # close pdf
-    opfile[:close]()
+    opfile.close()
   end
 end #function plotj
 
@@ -118,9 +118,9 @@ function plotl(ldat, params, order, O3col, ptitle, iofolder, systime, output)
   if typeof(output) == Bool  return  end
 
   # Initialise array of plots and define x data
-  opfile = pdf[:PdfPages]("$iofolder/lpar.pdf")
+  opfile = pdf.PdfPages("$iofolder/lpar.pdf")
   # Loop over reactions
-  @showprogress 1 "plot l..." for i = 1:length(ptitle)
+  @showprogress 0.1 "plot l..." for i = 1:length(ptitle)
     # define parameters
     # Calculate parameterised values
     o3 = collect(O3col[1]:O3col[end])
@@ -133,21 +133,19 @@ function plotl(ldat, params, order, O3col, ptitle, iofolder, systime, output)
     # Plot TUV data
 
     fig, ax = pyp.plot_data(ldata, lparam, ti = ptitle[i],
-    xlabel = "ozone column / DU",
-    ylabel = "l / 10\$^{$(order[i])}\\,\$s\$^{-1}\$",
-    xlims=(O3col[1],O3col[end]),ti_offset=-2,
-    legpos="upper right")
+      xlabel = "ozone column / DU", ylabel = "l / 10\$^{$(order[i])}\\,\$s\$^{-1}\$",
+      xlims=(O3col[1],O3col[end]),ti_offset=-2, legpos="upper right")
     # Plot time stamp
-    ax[:annotate]("created $(Dates.format(systime,"dd.mm.yyyy, HH:MM:SS"))",
+    ax.annotate("created $(Dates.format(systime,"dd.mm.yyyy, HH:MM:SS"))",
           xy=[0.2;0.9], xycoords="axes fraction", ha="left", va="bottom")
 
     # save plot to temporary png
-    opfile[:savefig](fig)
-    close()
+    opfile.savefig(fig)
+    close(fig)
   end
 
   # compile pngs in single pdf and delete pngs
-  opfile[:close]()
+  opfile.close()
 end #function plotl
 
 
@@ -264,12 +262,12 @@ end #function wrt_newparams
 
 
 """
-    set_titles(reactions::filehandling.TUVdata)
+    set_titles(reactions::TUVdata)
 
 Format `reactions.rxn` with LaTeX for nicer titles in plots and add MCM reaction
 number from `reactions.mcm`.
 """
-function set_titles(reactions::filehandling.TUVdata)
+function set_titles(reactions::TUVdata)
 
   # Initialise output
   chem = String[]

@@ -85,20 +85,19 @@ function fitl(ldata, order, o3col, params350, rxn)
     fit = curve_fit(lnew, o3, ldata[i,:], p0)
     # Adjust initial guesses for non-convergence
     fit, fail = convergel(o3, ldata[i,:], fit, "p0", 5,
-      ["\033[36mINFO:\033[0m Reaction $i ($(rxn[i])) converged after ",
-      " interations."])
+      ["Reaction $i ($(rxn[i])) converged after ", " interations."])
     # Drop lowest ozone column values for non-convergence
     fit, fail = convergel(o3, ldata[i,:], fit, "low", 3,
-      ["\033[36mINFO:\033[0m Reaction $i ($(rxn[i])) converged after dropping lowest ",
+      ["Reaction $i ($(rxn[i])) converged after dropping lowest ",
       " O3 column values."])
     # Drop highest ozone column values for non-convergence
     fit, fail = convergel(o3, ldata[i,:], fit, "high", 3,
-      ["\033[36mINFO:\033[0m Reaction $i ($(rxn[i])) converged after dropping highest ",
-        " O3 column values."])
+      ["Reaction $i ($(rxn[i])) converged after dropping highest ",
+      " O3 column values."])
     # Warn, if convergence couldn't be reached
     if fail
-      print("\033[95mFitting of parameter l did not converge for reaction ")
-      println("$i:\033[0m $(string(rxn[i])).")
+      @warn(string("\033[93mFitting of parameter l did not converge for reaction $i.\n",
+       "\033[0m$(string(rxn[i]))"))
     end
 
     # Calculate errors
@@ -146,7 +145,7 @@ function convergel(o3col::Vector{Float64}, lpar::Vector{Float64},
         lpar[counter:end-counter], fit.param)
     end
     if fit.converged
-      println(error_msg[1],counter,error_msg[2])
+      @info(error_msg[1]*string(counter)*error_msg[2])
     elseif counter == maxtry
       fail = true
       break
@@ -161,7 +160,7 @@ end #function convergel
 """
     jold(χ,p) / s^-1 = p[1]·cos(χ)^p[2]·exp(-p[3]·sec(χ))]
 """
-jold(χ,p) = p[1].*(cos.(χ)).^(p[2]).*exp.(-p[3].⋅sec.(χ))
+jold(χ,p) = p[1].⋅(cos.(χ)).^(p[2]).⋅exp.(-p[3].⋅sec.(χ))
 
 # Calculate j(χ[, O3col])
 """
