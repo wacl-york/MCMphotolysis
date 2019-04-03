@@ -4,17 +4,16 @@ module MCMphotolysis
 dir = Base.source_dir()
 
 # Load Julia packages
-using Statistics
-using Dates
-using ProgressMeter
-using LsqFit
-using PyCall
-using DataFrames
 using Printf
-using LaTeXStrings
+import LsqFit
+import PyCall; const py = PyCall
+import DataFrames.DataFrame
+import Dates
+import LaTeXStrings; const latex = LaTeXStrings
+import ProgressMeter; const pm = ProgressMeter
 import LinearAlgebra.⋅
 # pdf for multipage pdf plots
-const pdf = PyNULL()
+const pdf = py.PyNULL()
 
 # Load self-made packages
 import filehandling; const fh = filehandling
@@ -70,7 +69,7 @@ export j_oldpars,
 
 # Import pdf from matplotlib for multipage plotting
 function __init__()
-  copy!(pdf, pyimport("matplotlib.backends.backend_pdf"))
+  copy!(pdf, py.pyimport("matplotlib.backends.backend_pdf"))
 end
 
 
@@ -118,7 +117,7 @@ The `MCMversion` is needed to assign the correct MCM reaction numbers:
 """
 function j_oldpars(scen::String; output::Union{Bool,String}=true, DU::Number=350, MCMversion::Int64=3)
   # Initialise system time and output path/file name
-  systime = now()
+  systime = Dates.now()
 
   # Read dataframe with j values from TUV output file
   println("load data...")
@@ -153,7 +152,7 @@ Output is printed under the following conditions, when `output` is set to:
 function j_parameters(scen::String;
          output::Union{Bool,Int64,Vector{Int64}}=350, MCMversion::Int64=4)
   # Initialise system time and output path/file name
-  systime = now()
+  systime = Dates.now()
 
   # Read dataframe with j values from TUV output file
   println("load data...")

@@ -5,7 +5,7 @@ Plot j values saved in `jvals.jval` and parameterisations derived from parameter
 in `params` to file `jvalues.pdf` in the `iofolder` together with the
 `systime` of creation, if `output` is set to `true` or `"plot"`.
 """
-function plot_jold(jvals::TUVdata, params::PhotData, systime::DateTime,
+function plot_jold(jvals::TUVdata, params::PhotData, systime::Dates.DateTime,
   iofolder::String, output::Union{Bool,String})
   # Only print, if output is set to true
   if !(output == true || output == "plot")  return  end
@@ -17,7 +17,7 @@ function plot_jold(jvals::TUVdata, params::PhotData, systime::DateTime,
   opfile = pdf.PdfPages("$iofolder/jvalues.pdf")
 
   # Loop over all reactions
-  @showprogress 0.1 "plot data..." for i=1:length(params.l)
+  pm.@showprogress 0.1 "plot data..." for i=1:length(params.l)
     # define parameters
     # Calculate parameterised values
     χ = collect(0:π/360:π/2)
@@ -70,7 +70,7 @@ function plotj(jvals, params, ptitle, O3col, output, iofolder, systime)
     opfile = pdf.PdfPages("$iofolder/jvalues.$(o3)DU.pdf")
 
     # Loop over all reactions
-    @showprogress 0.1 "plot j@$(o3)DU..." for i=1:length(params.l)
+    pm.@showprogress 0.1 "plot j@$(o3)DU..." for i=1:length(params.l)
       # define parameters
       # Calculate parameterised values
       χ = collect(0:π/360:π/2)
@@ -120,7 +120,7 @@ function plotl(ldat, params, order, O3col, ptitle, iofolder, systime, output)
   # Initialise array of plots and define x data
   opfile = pdf.PdfPages("$iofolder/lpar.pdf")
   # Loop over reactions
-  @showprogress 0.1 "plot l..." for i = 1:length(ptitle)
+  pm.@showprogress 0.1 "plot l..." for i = 1:length(ptitle)
     # define parameters
     # Calculate parameterised values
     o3 = collect(O3col[1]:O3col[end])
@@ -293,5 +293,5 @@ function set_titles(reactions::TUVdata)
   end
 
   # Return reformatted output
-  return latexstring.(chem)
+  return latex.latexstring.(chem)
 end #function set_titles

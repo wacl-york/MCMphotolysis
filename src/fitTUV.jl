@@ -19,9 +19,9 @@ function fit_jold(jvals)
     # Fit at order 0 to increase accuracy
 
     # Derive fit
-    push!(fit, curve_fit(jold, jvals.rad, jvals.jval[i] ./ 10.0^jvals.order[i], p0))
+    push!(fit, LsqFit.curve_fit(jold, jvals.rad, jvals.jval[i] ./ 10.0^jvals.order[i], p0))
     # Derive sigma with 95% confidence
-    push!(sigma, stderror(fit[i]))
+    push!(sigma, LsqFit.stderror(fit[i]))
     # Calculate statistical data for RMSE and R^2
     # ss_err = sum(fit[i].resid.^2)
     # ss_tot = sum((jvals.jval[i]./10.0^jvals.order[i].-
@@ -82,7 +82,7 @@ function fitl(ldata, order, o3col, params350, rxn)
   for i = 1:length(ldata[:,1])
     p0 = [0.,ldata[i,1],100.,ldata[i,1],100.]
     # Fit l parameter to ozone column dependence
-    fit = curve_fit(lnew, o3, ldata[i,:], p0)
+    fit = LsqFit.curve_fit(lnew, o3, ldata[i,:], p0)
     # Adjust initial guesses for non-convergence
     fit, fail = convergel(o3, ldata[i,:], fit, "p0", 5,
       ["Reaction $i ($(rxn[i])) converged after ", " interations."])
@@ -107,7 +107,7 @@ function fitl(ldata, order, o3col, params350, rxn)
     l[[1,2,4]] *= 10.0^order[i]
     push!(lpar, l)
     if fit.converged
-      errl = stderror(fit)
+      errl = LsqFit.stderror(fit)
       sigmal = abs.((l./errl.*10.0^order[i] .+ params350.sigma[i][1]/params350.l[i]).*l)
     else
       sigmal = [Inf, Inf, Inf, Inf, Inf]
@@ -137,11 +137,11 @@ function convergel(o3col::Vector{Float64}, lpar::Vector{Float64},
   while !fit.converged
     counter += 1
     if test == "p0"
-      fit = curve_fit(lnew, o3col, lpar, fit.param)
+      fit = LsqFit.curve_fit(lnew, o3col, lpar, fit.param)
     elseif test == "low"
-      fit = curve_fit(lnew, o3col[1+counter:end], lpar[1+counter:end], fit.param)
+      fit = LsqFit.curve_fit(lnew, o3col[1+counter:end], lpar[1+counter:end], fit.param)
     elseif test == "high"
-      fit = curve_fit(lnew, o3col[counter:end-counter],
+      fit = LsqFit.curve_fit(lnew, o3col[counter:end-counter],
         lpar[counter:end-counter], fit.param)
     end
     if fit.converged
