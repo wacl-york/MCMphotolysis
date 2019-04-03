@@ -4,20 +4,20 @@ module MCMphotolysis
 dir = Base.source_dir()
 
 # Load Julia packages
-using Statistics
-using LinearAlgebra
-using Dates
-using ProgressMeter
-using LsqFit
-using PyCall
-using DataFrames
 using Printf
-using LaTeXStrings
-# PyCall python imports
-const pdf = PyNULL()
+import LsqFit
+import PyCall; const py = PyCall
+import DataFrames.DataFrame
+import Dates
+import LaTeXStrings; const latex = LaTeXStrings
+import ProgressMeter; const pm = ProgressMeter
+import LinearAlgebra.⋅
+# pdf for multipage pdf plots
+const pdf = py.PyNULL()
 
 # Load self-made packages
-using filehandling
+import filehandling; const fh = filehandling
+import filehandling.TUVdata
 import pyp
 
 ### NEW TYPES
@@ -64,12 +64,12 @@ end
 # export public functions
 export j_oldpars,
        j_parameters,
-       PhotData,
-       StatData
+       PhotData#,
+       # StatData
 
-
+# Import pdf from matplotlib for multipage plotting
 function __init__()
-  copy!(pdf, pyimport("matplotlib.backends.backend_pdf"))
+  copy!(pdf, py.pyimport("matplotlib.backends.backend_pdf"))
 end
 
 
@@ -110,17 +110,20 @@ are printed to a formatted text file or semi-colon separated csv file in a folde
 - `"data"`: Only print data to text/csv files
 - `false` or `"None"`: Don't print output only return the data from the function
 
-The `MCMversion` is needed to assign the correct MCM reaction numbers.
+The `MCMversion` is needed to assign the correct MCM reaction numbers:
+- `2`: MCMv3.2 or older
+- `3`: MCMv3.3.1
+- `4`: MCM/GECKO-A
 """
 function j_oldpars(scen::String; output::Union{Bool,String}=true, DU::Number=350, MCMversion::Int64=3)
   # Initialise system time and output path/file name
-  systime = now()
+  systime = Dates.now()
 
   # Read dataframe with j values from TUV output file
   println("load data...")
   ifile, iofolder = setup_files(scen, output)
-  if ifile == nothing  return nothing, nothing, nothing  end
-  jvals = readTUV(ifile, DU = DU, MCMversion = MCMversion)
+  if ifile == ""  @info("Script stopped."); return nothing, nothing  end
+  jvals = fh.readTUV(ifile, DU = DU, MCMversion = MCMversion)
 
   # Derive parameterisations for j values
   params = fit_jold(jvals) #, stats
@@ -149,12 +152,12 @@ Output is printed under the following conditions, when `output` is set to:
 function j_parameters(scen::String;
          output::Union{Bool,Int64,Vector{Int64}}=350, MCMversion::Int64=4)
   # Initialise system time and output path/file name
-  systime = now()
+  systime = Dates.now()
 
   # Read dataframe with j values from TUV output file
   println("load data...")
   inpfile, iofolder, O3col = getO3files(scen, output)
-  if inpfile == nothing  return nothing, nothing  end
+  if inpfile == ""  @info("Script stopped."); return nothing, nothing  end
 
   # Read TUV data and get original l parameters and m, n parameters for 350DU
   jvals = getTUVdata(inpfile, O3col, MCMversion)

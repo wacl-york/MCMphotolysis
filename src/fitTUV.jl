@@ -19,9 +19,9 @@ function fit_jold(jvals)
     # Fit at order 0 to increase accuracy
 
     # Derive fit
-    push!(fit, curve_fit(jold, jvals.rad, jvals.jval[i] ./ 10.0^jvals.order[i], p0))
+    push!(fit, LsqFit.curve_fit(jold, jvals.rad, jvals.jval[i] ./ 10.0^jvals.order[i], p0))
     # Derive sigma with 95% confidence
-    push!(sigma, stderror(fit[i]))
+    push!(sigma, LsqFit.stderror(fit[i]))
     # Calculate statistical data for RMSE and R^2
     # ss_err = sum(fit[i].resid.^2)
     # ss_tot = sum((jvals.jval[i]./10.0^jvals.order[i].-
@@ -82,23 +82,22 @@ function fitl(ldata, order, o3col, params350, rxn)
   for i = 1:length(ldata[:,1])
     p0 = [0.,ldata[i,1],100.,ldata[i,1],100.]
     # Fit l parameter to ozone column dependence
-    fit = curve_fit(lnew, o3, ldata[i,:], p0)
+    fit = LsqFit.curve_fit(lnew, o3, ldata[i,:], p0)
     # Adjust initial guesses for non-convergence
     fit, fail = convergel(o3, ldata[i,:], fit, "p0", 5,
-      ["\033[36mINFO:\033[0m Reaction $i ($(rxn[i])) converged after ",
-      " interations."])
+      ["Reaction $i ($(rxn[i])) converged after ", " interations."])
     # Drop lowest ozone column values for non-convergence
     fit, fail = convergel(o3, ldata[i,:], fit, "low", 3,
-      ["\033[36mINFO:\033[0m Reaction $i ($(rxn[i])) converged after dropping lowest ",
+      ["Reaction $i ($(rxn[i])) converged after dropping lowest ",
       " O3 column values."])
     # Drop highest ozone column values for non-convergence
     fit, fail = convergel(o3, ldata[i,:], fit, "high", 3,
-      ["\033[36mINFO:\033[0m Reaction $i ($(rxn[i])) converged after dropping highest ",
-        " O3 column values."])
+      ["Reaction $i ($(rxn[i])) converged after dropping highest ",
+      " O3 column values."])
     # Warn, if convergence couldn't be reached
     if fail
-      print("\033[95mFitting of parameter l did not converge for reaction ")
-      println("$i:\033[0m $(string(rxn[i])).")
+      @warn(string("\033[93mFitting of parameter l did not converge for reaction $i.\n",
+       "\033[0m$(string(rxn[i]))"))
     end
 
     # Calculate errors
@@ -108,7 +107,7 @@ function fitl(ldata, order, o3col, params350, rxn)
     l[[1,2,4]] *= 10.0^order[i]
     push!(lpar, l)
     if fit.converged
-      errl = stderror(fit)
+      errl = LsqFit.stderror(fit)
       sigmal = abs.((l./errl.*10.0^order[i] .+ params350.sigma[i][1]/params350.l[i]).*l)
     else
       sigmal = [Inf, Inf, Inf, Inf, Inf]
@@ -138,15 +137,15 @@ function convergel(o3col::Vector{Float64}, lpar::Vector{Float64},
   while !fit.converged
     counter += 1
     if test == "p0"
-      fit = curve_fit(lnew, o3col, lpar, fit.param)
+      fit = LsqFit.curve_fit(lnew, o3col, lpar, fit.param)
     elseif test == "low"
-      fit = curve_fit(lnew, o3col[1+counter:end], lpar[1+counter:end], fit.param)
+      fit = LsqFit.curve_fit(lnew, o3col[1+counter:end], lpar[1+counter:end], fit.param)
     elseif test == "high"
-      fit = curve_fit(lnew, o3col[counter:end-counter],
+      fit = LsqFit.curve_fit(lnew, o3col[counter:end-counter],
         lpar[counter:end-counter], fit.param)
     end
     if fit.converged
-      println(error_msg[1],counter,error_msg[2])
+      @info(error_msg[1]*string(counter)*error_msg[2])
     elseif counter == maxtry
       fail = true
       break
@@ -161,7 +160,7 @@ end #function convergel
 """
     jold(χ,p) / s^-1 = p[1]·cos(χ)^p[2]·exp(-p[3]·sec(χ))]
 """
-jold(χ,p) = p[1].*(cos.(χ)).^(p[2]).*exp.(-p[3].⋅sec.(χ))
+jold(χ,p) = p[1].⋅(cos.(χ)).^(p[2]).⋅exp.(-p[3].⋅sec.(χ))
 
 # Calculate j(χ[, O3col])
 """
